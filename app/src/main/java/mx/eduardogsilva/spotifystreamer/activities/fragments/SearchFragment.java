@@ -1,5 +1,6 @@
-package mx.eduardogsilva.spotifystreamer;
+package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
@@ -7,13 +8,19 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity;
+import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
+import mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class SearchFragment extends Fragment {
+public class SearchFragment extends Fragment implements AdapterView.OnItemClickListener {
 
     private final String LOG_TAG = SearchFragment.class.getSimpleName();
 
@@ -43,6 +50,7 @@ public class SearchFragment extends Fragment {
         // Set adapter for list
         ListView artistsListView = (ListView) rootView.findViewById(R.id.artist_search_listview);
         artistsListView.setAdapter(mArtistsAdapter);
+        artistsListView.setOnItemClickListener(this);
 
         // View to show when no results are shown.
         emptyView = rootView.findViewById(R.id.artist_no_items_found);
@@ -79,6 +87,19 @@ public class SearchFragment extends Fragment {
             }
         });
 
+        // Fire filter manually in case we are returning from a lifecycle event
         artistsLiveFilter.filter(artistSearchEditText.getText().toString());
+    }
+
+    // Listener to catch artist items clicks
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        String artistId = mArtistsAdapter.getArtistId(position);
+
+        // Create intent and launch tracks activity.
+        Intent tracksIntent = new Intent(getActivity(), TopTracksActivity.class);
+        tracksIntent.putExtra(Intent.EXTRA_REFERRER, artistId);
+
+        startActivity(tracksIntent);
     }
 }

@@ -1,4 +1,4 @@
-package mx.eduardogsilva.spotifystreamer;
+package mx.eduardogsilva.spotifystreamer.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.models.Artist;
+import mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter;
+import mx.eduardogsilva.spotifystreamer.R;
 
 /**
  * Adapter to display artists info on ListView.
@@ -23,8 +25,11 @@ import kaaes.spotify.webapi.android.models.Artist;
  */
 public class ArtistsAdapter extends BaseAdapter implements Filterable{
 
+    // Model - artists to handle
     private List<Artist> artists;
+    // layout inflater to create views on getView method
     private LayoutInflater inflater;
+    // Context to create the inflater and picasso reference
     private Context context;
 
     public ArtistsAdapter(Context context){
@@ -43,6 +48,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
         return artists.get(position);
     }
 
+    // Return a hashcode based on the artist id to prevent redrawing if possible.
     @Override
     public long getItemId(int position) {
         return artists.get(position).id.hashCode();
@@ -72,18 +78,37 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
         return convertView;
     }
 
+    /**
+     * Replaces al items in the adapter
+     * @param artists   Artists to substitute current data set.
+     */
     public void replaceAll(List<Artist> artists){
         this.artists = artists;
         super.notifyDataSetChanged();
     }
 
+    /**
+     * Removes all items from the adapter.
+     */
     public void removeAll() {
         artists.clear();
         super.notifyDataSetChanged();
     }
 
+    /**
+     * Get a live filter for use in live search.
+     */
     @Override
     public Filter getFilter() {
         return new ArtistsLiveFilter(this);
+    }
+
+    /**
+     * Return an artist Id.
+     * @param position  Position of the artist in the data set
+     * @return  Spotify Id of the artist
+     */
+    public String getArtistId(int position) {
+        return artists.get(position).id;
     }
 }
