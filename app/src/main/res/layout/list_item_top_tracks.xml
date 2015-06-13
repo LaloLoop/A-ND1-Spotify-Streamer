@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:minHeight="?android:attr/listPreferredItemHeight">
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/list_item_track_imageview"
+        android:src="@mipmap/ic_launcher"
+        android:layout_marginLeft="@dimen/abc_list_item_padding_horizontal_material"
+        android:layout_marginRight="@dimen/abc_list_item_padding_horizontal_material"
+        android:layout_marginTop="@dimen/abc_dialog_list_padding_vertical_material"
+        android:layout_marginBottom="@dimen/abc_dialog_list_padding_vertical_material"
+        android:contentDescription="@string/content_desc_album_pic" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_marginRight="@dimen/abc_list_item_padding_horizontal_material">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Rumble On"
+            android:layout_weight="1"
+            android:gravity="bottom"
+            style="@style/Base.TextAppearance.AppCompat.Medium"
+            android:id="@+id/list_item_track_name"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Led Zeppelin IV"
+            android:layout_weight="1"
+            android:gravity="top"
+            android:id="@+id/list_item_track_album"/>
+
+    </LinearLayout>
+
+</LinearLayout>

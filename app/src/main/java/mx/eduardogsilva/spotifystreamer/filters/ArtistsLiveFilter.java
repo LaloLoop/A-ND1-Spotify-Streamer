@@ -1,4 +1,4 @@
-package mx.eduardogsilva.spotifystreamer;
+package mx.eduardogsilva.spotifystreamer.filters;
 
 import android.util.Log;
 import android.view.View;
@@ -11,6 +11,7 @@ import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
 import retrofit.RetrofitError;
 
 /**
