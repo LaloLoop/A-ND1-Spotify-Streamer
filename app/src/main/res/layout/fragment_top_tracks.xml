@@ -9,11 +9,13 @@
     tools:context="mx.eduardogsilva.spotifystreamer.activities.fragments.TopTracksFragment"
     android:orientation="vertical">
 
+    <!-- Tracks ListView -->
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/top_tracks_listview"></ListView>
+        android:id="@+id/top_tracks_listview" />
 
+    <!-- Empty view shown when no tracks are found -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

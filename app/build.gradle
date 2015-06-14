@@ -27,11 +27,19 @@ android {
 }
 
 dependencies {
+    // Include jars
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    // Spotify Wrapper api
     compile(name: 'spotify-web-api-android-0.1.0', ext: 'aar')
-    compile 'com.android.support:appcompat-v7:22.2.0'
+    // Image loading
     compile 'com.squareup.picasso:picasso:2.5.2'
+    // Wrapper dependency - REST WS
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.squareup.okhttp:okhttp:2.2.0'
+    // Compat older devices
+    compile 'com.android.support:appcompat-v7:22.2.0'
     compile 'com.android.support:support-v4:22.2.0'
+    compile 'com.android.support:design:22.2.0'
+    // RecyclerView compat
+    compile 'com.android.support:recyclerview-v7:22.2.0'
 }

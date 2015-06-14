@@ -1,8 +1,10 @@
 package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -61,8 +63,20 @@ public class TopTracksFragment extends Fragment {
         Intent intent = getActivity().getIntent();
         String artistId = intent.getStringExtra(Intent.EXTRA_REFERRER);
 
+        updateTracks(artistId);
+    }
+
+    /**
+     * Retrieves the location preferences and updates the track data based on the artist and location
+     * @param artistId Artist to get top tracks
+     */
+    private void updateTracks(String artistId) {
+        // Get the location saved in preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String locationPref = sharedPreferences.getString(getString(R.string.pref_key_location), getString(R.string.pref_default_location));
+
         // Create the asyncTask to download tracks data
-        new TracksDownloadTask().execute(artistId);
+        new TracksDownloadTask().execute(artistId, locationPref);
     }
 
     private class TracksDownloadTask extends AsyncTask<String, Void, Tracks>{
@@ -80,7 +94,7 @@ public class TopTracksFragment extends Fragment {
         @Override
         protected Tracks doInBackground(String... params) {
 
-            if(params[0] == null){
+            if(params[0] == null || params[1] == null){
                 return null;
             }
 
@@ -89,7 +103,7 @@ public class TopTracksFragment extends Fragment {
             try {
 
                 Map<String, Object> options = new HashMap<>();
-                options.put("country", "MX");
+                options.put("country", params[1]);
 
                 tracks = spotifyService.getArtistTopTrack(params[0], options);
 

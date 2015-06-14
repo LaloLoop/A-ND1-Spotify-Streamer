@@ -10,13 +10,18 @@
     android:orientation="vertical"
     tools:context=".MainActivityFragment">
 
-
-    <EditText
+    <android.support.design.widget.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/artist_search_edittext"
-        android:layout_gravity="center_horizontal"
-        android:hint="@string/hint_artist_name" />
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/artist_search_edittext"
+            android:layout_gravity="center_horizontal"
+            android:hint="@string/hint_artist_name" />
+
+    </android.support.design.widget.TextInputLayout>
 
     <ListView
         android:layout_width="match_parent"

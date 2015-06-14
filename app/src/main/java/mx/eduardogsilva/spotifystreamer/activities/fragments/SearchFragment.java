@@ -12,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import kaaes.spotify.webapi.android.models.Artist;
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity;
 import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
@@ -30,6 +31,11 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
 
     // Artists adapter
     private ArtistsAdapter mArtistsAdapter;
+
+    // Intent keys
+    public static final String EXTRA_ARTIST_ID = "mx.eduardogsilva.spotifystreamer.ARTIST_ID";
+    public static final String EXTRA_ARTIST_NAME = "mx.eduardogsilva.spotifystreamer.ARTIST_NAME";
+    public static final String EXTRA_ARTIST_IMAGE_URL = "mx.eduardogsilva.spotifystreamer.ARTIST_IMAGE_URL";
 
     public SearchFragment() {
     }
@@ -94,11 +100,15 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
     // Listener to catch artist items clicks
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String artistId = mArtistsAdapter.getArtistId(position);
+        Artist artist = (Artist) mArtistsAdapter.getItem(position);
 
         // Create intent and launch tracks activity.
         Intent tracksIntent = new Intent(getActivity(), TopTracksActivity.class);
-        tracksIntent.putExtra(Intent.EXTRA_REFERRER, artistId);
+        tracksIntent.putExtra(EXTRA_ARTIST_ID, artist.id);
+        tracksIntent.putExtra(EXTRA_ARTIST_NAME, artist.name);
+        if(!artist.images.isEmpty()){
+            tracksIntent.putExtra(EXTRA_ARTIST_IMAGE_URL, artist.images.get(0).url);
+        }
 
         startActivity(tracksIntent);
     }
