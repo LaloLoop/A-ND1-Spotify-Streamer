@@ -15,9 +15,9 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 
-import kaaes.spotify.webapi.android.models.Artist;
-import mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter;
 import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter;
+import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
 
 /**
  * Adapter to display artists info on ListView.
@@ -25,8 +25,9 @@ import mx.eduardogsilva.spotifystreamer.R;
  */
 public class ArtistsAdapter extends BaseAdapter implements Filterable{
 
+    private static final String LOG_TAG = ArtistsAdapter.class.getSimpleName();
     // Model - artists to handle
-    private List<Artist> artists;
+    private List<ArtistImageSort> artists;
     // layout inflater to create views on getView method
     private LayoutInflater inflater;
     // Context to create the inflater and picasso reference
@@ -56,24 +57,22 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        ArtistViewHolder viewHolder;
+
         if(convertView == null){
+
             convertView = inflater.inflate(R.layout.list_item_artist, parent, false);
-        }
 
-        Artist artist = artists.get(position);
+            viewHolder = new ArtistViewHolder(convertView);
+            convertView.setTag(viewHolder);
 
-        // Get TextView
-        TextView nameTextView = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
-        nameTextView.setText(artist.name);
-
-        ImageView imageView = (ImageView) convertView.findViewById(R.id.list_item_artist_imageview);
-
-        // Load image
-        if(!artist.images.isEmpty()){
-            Picasso.with(context).load(artist.images.get(0).url).into(imageView);
         }else {
-            imageView.setImageResource(R.mipmap.ic_launcher);
+            viewHolder = (ArtistViewHolder) convertView.getTag();
         }
+
+        ArtistImageSort artist = artists.get(position);
+
+        viewHolder.bind(artist, context);
 
         return convertView;
     }
@@ -82,7 +81,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
      * Replaces al items in the adapter
      * @param artists   Artists to substitute current data set.
      */
-    public void replaceAll(List<Artist> artists){
+    public void replaceAll(List<ArtistImageSort> artists){
         this.artists = artists;
         super.notifyDataSetChanged();
     }
@@ -110,5 +109,30 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
      */
     public String getArtistId(int position) {
         return artists.get(position).id;
+    }
+
+    /* View Holder for artists */
+    private static class ArtistViewHolder {
+        public ImageView artistImage;
+        public TextView artistName;
+
+        public ArtistViewHolder(View convertView) {
+            artistImage = (ImageView) convertView.findViewById(R.id.list_item_artist_imageview);
+            artistName = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
+        }
+
+        public void bind(ArtistImageSort artist, Context context) {
+            artistName.setText(artist.name);
+
+            String thumbImage = artist.getThumbImage();
+
+            // Load image
+            if(!thumbImage.isEmpty()){
+                Picasso.with(context).load(thumbImage).into(artistImage);
+            }else {
+                artistImage.setImageResource(R.mipmap.ic_launcher);
+            }
+        }
+
     }
 }

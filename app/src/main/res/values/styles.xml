@@ -4,6 +4,7 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Primary Color -->
         <item name="colorPrimary">@color/primary_color</item>
+
     </style>
 
 </resources>

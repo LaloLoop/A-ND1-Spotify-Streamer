@@ -1,5 +1,23 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/fragment"
-    android:name="mx.eduardogsilva.spotifystreamer.activities.fragments.SearchFragment"
-    tools:layout="@layout/fragment_search" android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <android.support.v7.widget.Toolbar
+        android:layout_height="?attr/actionBarSize"
+        android:layout_width="match_parent"
+        android:title="@string/app_name"
+        android:id="@+id/main_toolbar"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:background="@color/primary_color"/>
+
+    <fragment
+        android:id="@+id/fragment"
+        android:name="mx.eduardogsilva.spotifystreamer.activities.fragments.SearchFragment"
+        tools:layout="@layout/fragment_search"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/main_toolbar"/>
+
+</RelativeLayout>

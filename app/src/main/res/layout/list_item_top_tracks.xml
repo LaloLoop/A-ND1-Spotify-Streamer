@@ -29,7 +29,7 @@
             tools:text="Rumble On"
             android:layout_weight="1"
             android:gravity="bottom"
-            style="@style/Base.TextAppearance.AppCompat.Medium"
+            android:textSize="17sp"
             android:id="@+id/list_item_track_name"/>
 
         <TextView

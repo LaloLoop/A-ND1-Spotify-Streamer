@@ -1,16 +1,28 @@
 package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
+import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,37 +32,125 @@ import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Tracks;
 import mx.eduardogsilva.spotifystreamer.R;
-import mx.eduardogsilva.spotifystreamer.adapters.TracksAdapter;
+import mx.eduardogsilva.spotifystreamer.adapters.TracksRecyclerAdapter;
 import retrofit.RetrofitError;
 
+
 /**
- * A placeholder fragment containing a simple view.
+ * A simple {@link Fragment} subclass.
+ * Activities that contain this fragment must implement the
+ * {@link TopTracksFragment.OnFragmentInteractionListener} interface
+ * to handle interaction events.
+ * Use the {@link TopTracksFragment#newInstance} factory method to
+ * create an instance of this fragment.
  */
 public class TopTracksFragment extends Fragment {
+    // TODO: Rename parameter arguments, choose names that match
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
 
-    private static final String LOG_TAG = TopTracksFragment.class.getSimpleName();
+    // TODO: Rename and change types of parameters
+    private String mParam1;
+    private String mParam2;
 
-    // Adapter to handle track data
-    private TracksAdapter mTrackAdapter;
+    private OnFragmentInteractionListener mListener;
+
+    private TracksRecyclerAdapter mTracksAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+
+    private String artistId;
+
+    private RecyclerView tracksRecyclerView;
+    private View loadingView;
+    private View emptyView;
+
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param param1 Parameter 1.
+     * @param param2 Parameter 2.
+     * @return A new instance of fragment TopTracksMaterialFragment.
+     */
+    // TODO: Rename and change types and number of parameters
+    public static TopTracksFragment newInstance(String param1, String param2) {
+        TopTracksFragment fragment = new TopTracksFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, param1);
+        args.putString(ARG_PARAM2, param2);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     public TopTracksFragment() {
+        // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam2 = getArguments().getString(ARG_PARAM2);
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_top_tracks, container, false);
 
+        // Get intent to obtain artist id
+        Intent intent = getActivity().getIntent();
+        artistId = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_ID);
+        String artistName = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_NAME);
+        String artistImageUrl = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_IMAGE_URL);
+
+        // Get Toolbar to setup
+        Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.top_tracks_toolbar);
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.setSupportActionBar(toolbar);
+        ActionBar actionBar = activity.getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        // Get collapsing toolbar to set title
+        CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) rootView.findViewById(R.id.tracks_collapsing_toolbar_layout);
+        collapsingToolbar.setTitle(artistName);
+
+        // Get reference to RecyclerView
+        tracksRecyclerView = (RecyclerView) rootView.findViewById(R.id.tracks_recyclerview);
+
+        // Get layout manager
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        tracksRecyclerView.setLayoutManager(mLayoutManager);
+
         // Create adapter
-        mTrackAdapter = new TracksAdapter(getActivity());
+        mTracksAdapter = new TracksRecyclerAdapter(getActivity());
+        tracksRecyclerView.setAdapter(mTracksAdapter);
 
-        // Empty tracks view
-        View emptyTracksView = rootView.findViewById(R.id.tracks_no_items_found);
+        // Set separator
+        tracksRecyclerView.addItemDecoration(
+                new HorizontalDividerItemDecoration.Builder(getActivity())
+                        .color(Color.LTGRAY)
+                        .sizeResId(R.dimen.divider)
+                        .build());
 
-        // Get ListView reference
-        ListView topTracksListView = (ListView) rootView.findViewById(R.id.top_tracks_listview);
-        topTracksListView.setAdapter(mTrackAdapter);
-        topTracksListView.setEmptyView(emptyTracksView);
+        // Get ImageView to show artist picture
+        ImageView imageView = (ImageView) rootView.findViewById(R.id.top_tracks_header_imageview);
+        if(artistImageUrl != null && !artistImageUrl.isEmpty()){
+            Picasso.with(getActivity()).load(artistImageUrl).into(imageView);
+        }else {
+            imageView.setImageResource(R.mipmap.ic_launcher);
+        }
+
+        // Get Empty and loading view
+        /*emptyView = rootView.findViewById(R.id.tracks_no_items_found);
+        loadingView = rootView.findViewById(R.id.loading_top_tracks);*/
 
         return rootView;
     }
@@ -58,10 +158,6 @@ public class TopTracksFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-
-        // Get intent to obtain artist id
-        Intent intent = getActivity().getIntent();
-        String artistId = intent.getStringExtra(Intent.EXTRA_REFERRER);
 
         updateTracks(artistId);
     }
@@ -79,7 +175,46 @@ public class TopTracksFragment extends Fragment {
         new TracksDownloadTask().execute(artistId, locationPref);
     }
 
-    private class TracksDownloadTask extends AsyncTask<String, Void, Tracks>{
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(uri);
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnFragmentInteractionListener) activity;
+        } catch (ClassCastException e) {
+            /*throw new ClassCastException(activity.toString()
+                    + " must implement OnFragmentInteractionListener");*/
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+        public void onFragmentInteraction(Uri uri);
+    }
+
+    private class TracksDownloadTask extends AsyncTask<String, Void, Tracks> {
         private SpotifyApi spotifyApi;
         private SpotifyService spotifyService;
         private final String LOG_TAG = TracksDownloadTask.class.getSimpleName();
@@ -89,6 +224,10 @@ public class TopTracksFragment extends Fragment {
             super.onPreExecute();
             spotifyApi = new SpotifyApi();
             spotifyService = spotifyApi.getService();
+
+            tracksRecyclerView.setVisibility(View.GONE);
+            //loadingView.setVisibility(View.VISIBLE);
+
         }
 
         @Override
@@ -121,10 +260,19 @@ public class TopTracksFragment extends Fragment {
         @Override
         protected void onPostExecute(Tracks tracks) {
             super.onPostExecute(tracks);
+
+            //loadingView.setVisibility(View.GONE);
+
             if(tracks != null){
-                mTrackAdapter.setTracks(tracks.tracks);
+                mTracksAdapter.setTracks(tracks.tracks);
+
+                if (tracks.tracks.isEmpty()) {
+                    //emptyView.setVisibility(View.VISIBLE);
+                }else {
+                    tracksRecyclerView.setVisibility(View.VISIBLE);
+                }
             }
-            // TODO show error handler.
         }
     }
+
 }

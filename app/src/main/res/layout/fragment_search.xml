@@ -3,26 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
     android:orientation="vertical"
     tools:context=".MainActivityFragment">
 
-    <android.support.design.widget.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/artist_search_edittext"
-            android:layout_gravity="center_horizontal"
-            android:hint="@string/hint_artist_name" />
-
-    </android.support.design.widget.TextInputLayout>
-
+    <!-- Main ListView for artist data -->
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -30,6 +14,7 @@
         android:layout_gravity="center_horizontal"
         tools:visibility="gone"/>
 
+    <!-- Not found message -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -58,5 +43,19 @@
             android:layout_gravity="center"
             android:gravity="center_horizontal"/>
     </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/loading_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+
+    </RelativeLayout>
 
 </LinearLayout>

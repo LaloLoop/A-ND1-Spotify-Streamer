@@ -1,9 +1,9 @@
 package mx.eduardogsilva.spotifystreamer.filters;
 
 import android.util.Log;
-import android.view.View;
 import android.widget.Filter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
@@ -12,6 +12,7 @@ import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
+import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
 import retrofit.RetrofitError;
 
 /**
@@ -28,8 +29,8 @@ public class ArtistsLiveFilter extends Filter {
     // Reference to adapter to update the view
     private final ArtistsAdapter mArtistsAdapter;
 
-    // Reference to empty view to show.
-    private View emptyView;
+    // Listen data changes (filtering).
+    private OnDataFilteredListener dataFilteredListener;
 
     // Constructor
     public ArtistsLiveFilter(ArtistsAdapter mArtistsAdapter) {
@@ -58,7 +59,7 @@ public class ArtistsLiveFilter extends Filter {
 
             // Set data in result
             filterResults.count = artistsPager.artists.total;
-            filterResults.values = artistsPager.artists.items;
+            filterResults.values = toArtistImageSort(artistsPager.artists.items);
             filterResults.resultType = ArtistsFilterResults.TYPE_SUCCESS;
 
         }catch(RetrofitError re){
@@ -78,6 +79,17 @@ public class ArtistsLiveFilter extends Filter {
         return filterResults;
     }
 
+    private Object toArtistImageSort(List<Artist> items) {
+        List<ArtistImageSort> artistImageSorts = new ArrayList<>(items.size());
+
+        for(Artist a : items){
+            ArtistImageSort ais = new ArtistImageSort(a);
+            artistImageSorts.add(ais);
+        }
+
+        return artistImageSorts;
+    }
+
     @Override
     protected void publishResults(CharSequence constraint, FilterResults results) {
 
@@ -89,15 +101,20 @@ public class ArtistsLiveFilter extends Filter {
 
                 if(artistsResults.count > 0){
 
-                    List<Artist> artists = (List<Artist>) artistsResults.values;
+                    List<ArtistImageSort> artists = (List<ArtistImageSort>) artistsResults.values;
                     mArtistsAdapter.replaceAll(artists);
-                    showEmptyView(false);
+
+                    if(dataFilteredListener != null){
+                        dataFilteredListener.onDataFiltered();
+                    }
 
                 } else {
 
                     mArtistsAdapter.removeAll();
-                    showEmptyView(true);
 
+                    if(dataFilteredListener != null){
+                        dataFilteredListener.onNoResultsFound();
+                    }
                 }
 
                 break;
@@ -106,14 +123,19 @@ public class ArtistsLiveFilter extends Filter {
 
                 Log.e(LOG_TAG, "Call error: " + artistsResults.errorMsg);
 
-                showEmptyView(false);
+                if(dataFilteredListener != null){
+                    dataFilteredListener.onFilterError(artistsResults.errorMsg);
+                }
 
                 break;
 
             case ArtistsFilterResults.TYPE_EMPTY_STRING:
 
-                showEmptyView(false);
                 mArtistsAdapter.removeAll();
+
+                if(dataFilteredListener != null){
+                    dataFilteredListener.onNoResultsFound();
+                }
 
                 break;
         }
@@ -121,16 +143,9 @@ public class ArtistsLiveFilter extends Filter {
     }
 
     /* ===== SETTERS & GETTERS ==== */
-    public View getEmptyView() {
-        return emptyView;
-    }
 
-    public void setEmptyView(View emptyView) {
-        this.emptyView = emptyView;
-    }
-
-    private void showEmptyView(boolean show){
-        emptyView.setVisibility(show ? View.VISIBLE : View.GONE);
+    public void setDataFilteredListener(OnDataFilteredListener dataFilteredListener) {
+        this.dataFilteredListener = dataFilteredListener;
     }
 
     /**
@@ -142,6 +157,19 @@ public class ArtistsLiveFilter extends Filter {
         public static final int TYPE_SUCCESS = 1;
         public static final int TYPE_ERROR = 2;
         public static final int TYPE_EMPTY_STRING = 3;
+    }
+
+    /* Interface for listener */
+    public interface OnDataFilteredListener {
+        /**
+         * Notify that data was filtered
+         */
+        public void onDataFiltered();
+
+        public void onNoResultsFound();
+
+        public void onFilterError(String errorMsg);
+
     }
 
 }
