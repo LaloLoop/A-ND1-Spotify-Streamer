@@ -2,6 +2,7 @@ package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
@@ -53,9 +54,13 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     private ArtistsLiveFilter artistsLiveFilter;
 
     // Intent keys
-    public static final String EXTRA_ARTIST_ID = "mx.eduardogsilva.spotifystreamer.ARTIST_ID";
-    public static final String EXTRA_ARTIST_NAME = "mx.eduardogsilva.spotifystreamer.ARTIST_NAME";
-    public static final String EXTRA_ARTIST_IMAGE_URL = "mx.eduardogsilva.spotifystreamer.ARTIST_IMAGE_URL";
+    public static final String EXTRA_ARTIST_ID = "ARTIST_ID";
+    public static final String EXTRA_ARTIST_NAME = "ARTIST_NAME";
+    public static final String EXTRA_ARTIST_IMAGE_URL = "ARTIST_IMAGE_URL";
+    public static final String EXTRA_ARTIST_LV_STATE = "ARTIST_LV_POSITION";
+
+    // ListView state
+    private Parcelable mListState = null;
 
     // Bundle keys
     private static final String BUNDLE_QUERY = "queryString";
@@ -112,6 +117,10 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         outState.putString(BUNDLE_QUERY, currentSearchQuery);
         outState.putBoolean(BUNDLE_SV_ICONIFIED, searchView.isIconified());
 
+        // Save ListView position
+        mListState = artistsListView.onSaveInstanceState();
+        outState.putParcelable(EXTRA_ARTIST_LV_STATE, mListState);
+
         super.onSaveInstanceState(outState);
     }
 
@@ -121,10 +130,12 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         if(savedInstanceState != null){
             currentSearchQuery = savedInstanceState.getString(BUNDLE_QUERY);
             iconified = savedInstanceState.getBoolean(BUNDLE_SV_ICONIFIED);
+            mListState = savedInstanceState.getParcelable(EXTRA_ARTIST_LV_STATE);
 
         }else {
             currentSearchQuery = "";
             iconified = true;
+            mListState = null;
         }
     }
 
@@ -188,8 +199,20 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         // Go to top on ListView
         loadingView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
-        artistsListView.setSelectionAfterHeaderView();
+
         artistsListView.setVisibility(View.VISIBLE);
+
+        // Restore list state
+        // If we have a list state, restore it.
+        if(mListState != null){
+            artistsListView.onRestoreInstanceState(mListState);
+            mListState = null;
+        }
+        // By default set top position.
+        else {
+            artistsListView.smoothScrollToPosition(0);
+        }
+
     }
 
     @Override
