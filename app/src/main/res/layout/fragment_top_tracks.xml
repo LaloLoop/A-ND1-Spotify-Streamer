@@ -9,7 +9,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/tracks_recyclerview"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        />
+
+    <!-- Loading view -->
+    <!--<RelativeLayout
+        android:id="@+id/loading_top_tracks"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal|top"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+
+    </RelativeLayout>-->
 
     <!-- Collapsing Toolbar -->
     <android.support.design.widget.AppBarLayout

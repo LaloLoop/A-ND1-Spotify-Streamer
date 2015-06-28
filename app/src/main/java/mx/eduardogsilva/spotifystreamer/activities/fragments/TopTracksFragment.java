@@ -62,8 +62,6 @@ public class TopTracksFragment extends Fragment {
     private String artistId;
 
     private RecyclerView tracksRecyclerView;
-    private View loadingView;
-    private View emptyView;
 
     /**
      * Use this factory method to create a new instance of
@@ -148,10 +146,6 @@ public class TopTracksFragment extends Fragment {
             imageView.setImageResource(R.mipmap.ic_launcher);
         }
 
-        // Get Empty and loading view
-        /*emptyView = rootView.findViewById(R.id.tracks_no_items_found);
-        loadingView = rootView.findViewById(R.id.loading_top_tracks);*/
-
         return rootView;
     }
 
@@ -225,8 +219,8 @@ public class TopTracksFragment extends Fragment {
             spotifyApi = new SpotifyApi();
             spotifyService = spotifyApi.getService();
 
-            tracksRecyclerView.setVisibility(View.GONE);
-            //loadingView.setVisibility(View.VISIBLE);
+            //tracksRecyclerView.setVisibility(View.GONE);
+            /*loadingView.setVisibility(View.VISIBLE);*/
 
         }
 
@@ -264,13 +258,14 @@ public class TopTracksFragment extends Fragment {
             //loadingView.setVisibility(View.GONE);
 
             if(tracks != null){
+                mTracksAdapter.setIsLoading(false);
                 mTracksAdapter.setTracks(tracks.tracks);
 
-                if (tracks.tracks.isEmpty()) {
-                    //emptyView.setVisibility(View.VISIBLE);
-                }else {
-                    tracksRecyclerView.setVisibility(View.VISIBLE);
-                }
+                /*if (tracks.tracks.isEmpty()) {
+                    emptyView.setVisibility(View.VISIBLE);
+                }else {*/
+                    //tracksRecyclerView.setVisibility(View.VISIBLE);
+                //}
             }
         }
     }
