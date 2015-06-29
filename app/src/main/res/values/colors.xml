@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="primary_color" type="color">#75a110</item>
+    <item name="primary_color_dark" type="color">#51730f</item>
+    <item name="toolbar_gradient_start_end" type="color">#32000000</item>
 </resources>

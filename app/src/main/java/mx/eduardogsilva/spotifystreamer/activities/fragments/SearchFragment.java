@@ -20,11 +20,11 @@ import android.widget.Toast;
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity;
 import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
-import mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter;
+import mx.eduardogsilva.spotifystreamer.filters.ArtistsFilter;
 import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
 
 import static android.widget.AdapterView.OnItemClickListener;
-import static mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter.OnDataFilteredListener;
+import static mx.eduardogsilva.spotifystreamer.filters.ArtistsFilter.OnDataFilteredListener;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -51,7 +51,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     private ArtistsAdapter mArtistsAdapter;
 
     // Live filter
-    private ArtistsLiveFilter artistsLiveFilter;
+    private ArtistsFilter artistsFilter;
 
     // Intent keys
     public static final String EXTRA_ARTIST_ID = "ARTIST_ID";
@@ -100,9 +100,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         super.onStart();
 
         // Get filter we will be using.
-        artistsLiveFilter = (ArtistsLiveFilter) mArtistsAdapter.getFilter();
+        artistsFilter = (ArtistsFilter) mArtistsAdapter.getFilter();
         // Set listener to check when data is updated
-        artistsLiveFilter.setDataFilteredListener(this);
+        artistsFilter.setDataFilteredListener(this);
 
     }
 
@@ -120,6 +120,8 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         // Save ListView position
         mListState = artistsListView.onSaveInstanceState();
         outState.putParcelable(EXTRA_ARTIST_LV_STATE, mListState);
+        // Prevent using this if the activity is not recreated.
+        mListState = null;
 
         super.onSaveInstanceState(outState);
     }
@@ -183,7 +185,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
 
         searchView.clearFocus();
 
-        artistsLiveFilter.filter(query);
+        artistsFilter.filter(query);
 
         return true;
     }
@@ -225,6 +227,6 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     public void onFilterError(String errorMsg) {
         loadingView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
-        Toast.makeText(getActivity(), "An error occurred while searching artists", Toast.LENGTH_LONG);
+        Toast.makeText(getActivity(), R.string.error_search_artists, Toast.LENGTH_LONG).show();
     }
 }

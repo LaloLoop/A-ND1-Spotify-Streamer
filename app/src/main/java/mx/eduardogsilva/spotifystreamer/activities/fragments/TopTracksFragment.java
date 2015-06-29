@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
@@ -56,12 +58,19 @@ public class TopTracksFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
+    // Custom adapter for tracks.
     private TracksRecyclerAdapter mTracksAdapter;
+    // Layout manager for elements placing in recycler view
     private RecyclerView.LayoutManager mLayoutManager;
 
+    // Artist id to get/show tracks.
     private String artistId;
 
     private RecyclerView tracksRecyclerView;
+
+    // State for recycler view
+    private Parcelable mTracksState = null;
+    private final static String BUNDLE_TRACKS_STATE = "tracksState";
 
     /**
      * Use this factory method to create a new instance of
@@ -120,6 +129,12 @@ public class TopTracksFragment extends Fragment {
         CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) rootView.findViewById(R.id.tracks_collapsing_toolbar_layout);
         collapsingToolbar.setTitle(artistName);
 
+        // On Older devices the title does not appear with correct text color.
+        if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1){
+            collapsingToolbar.setCollapsedTitleTextAppearance(android.support.v7.appcompat.R.style.Base_TextAppearance_AppCompat_Widget_ActionBar_Title_Inverse);
+            collapsingToolbar.setExpandedTitleTextAppearance(android.support.v7.appcompat.R.style.Base_TextAppearance_AppCompat_Widget_ActionBar_Title_Inverse);
+        }
+
         // Get reference to RecyclerView
         tracksRecyclerView = (RecyclerView) rootView.findViewById(R.id.tracks_recyclerview);
 
@@ -143,7 +158,7 @@ public class TopTracksFragment extends Fragment {
         if(artistImageUrl != null && !artistImageUrl.isEmpty()){
             Picasso.with(getActivity()).load(artistImageUrl).into(imageView);
         }else {
-            imageView.setImageResource(R.mipmap.ic_launcher);
+            imageView.setImageResource(R.mipmap.default_banner);
         }
 
         return rootView;
@@ -154,6 +169,27 @@ public class TopTracksFragment extends Fragment {
         super.onStart();
 
         updateTracks(artistId);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
+        mTracksState = mLayoutManager.onSaveInstanceState();
+
+        outState.putParcelable(BUNDLE_TRACKS_STATE, mTracksState);
+
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        if(savedInstanceState != null){
+            mTracksState = savedInstanceState.getParcelable(BUNDLE_TRACKS_STATE);
+        } else {
+            mTracksState = null;
+        }
     }
 
     /**
@@ -218,15 +254,12 @@ public class TopTracksFragment extends Fragment {
             super.onPreExecute();
             spotifyApi = new SpotifyApi();
             spotifyService = spotifyApi.getService();
-
-            //tracksRecyclerView.setVisibility(View.GONE);
-            /*loadingView.setVisibility(View.VISIBLE);*/
-
         }
 
         @Override
         protected Tracks doInBackground(String... params) {
 
+            // Get artist Id an country
             if(params[0] == null || params[1] == null){
                 return null;
             }
@@ -261,11 +294,10 @@ public class TopTracksFragment extends Fragment {
                 mTracksAdapter.setIsLoading(false);
                 mTracksAdapter.setTracks(tracks.tracks);
 
-                /*if (tracks.tracks.isEmpty()) {
-                    emptyView.setVisibility(View.VISIBLE);
-                }else {*/
-                    //tracksRecyclerView.setVisibility(View.VISIBLE);
-                //}
+                // Restore position.
+                if(mTracksState != null){
+                    mLayoutManager.onRestoreInstanceState(mTracksState);
+                }
             }
         }
     }

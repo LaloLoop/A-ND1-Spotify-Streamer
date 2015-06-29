@@ -12,26 +12,12 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         />
 
-    <!-- Loading view -->
-    <!--<RelativeLayout
-        android:id="@+id/loading_top_tracks"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_horizontal|top"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:indeterminate="true" />
-
-    </RelativeLayout>-->
-
     <!-- Collapsing Toolbar -->
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="170dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        android:layout_height="@dimen/artist_banner_height"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:id="@+id/top_tracks_appbar">
 
         <android.support.design.widget.CollapsingToolbarLayout
             android:layout_width="match_parent"
@@ -45,14 +31,21 @@
                 android:layout_height="match_parent"
                 android:id="@+id/top_tracks_header_imageview"
                 android:scaleType="centerCrop"
-                app:layout_collapseMode = "parallax"/>
+                app:layout_collapseMode = "parallax"
+                android:contentDescription="@string/content_desc_artist_pic" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/top_tracks_gradient_top" />
 
             <android.support.v7.widget.Toolbar
                 android:layout_height="?attr/actionBarSize"
                 android:layout_width="match_parent"
                 app:layout_collapseMode="pin"
                 android:id="@+id/top_tracks_toolbar"
-                android:title="@string/title_activity_top_tracks" />
+                android:title="@string/title_activity_top_tracks"
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
 
         </android.support.design.widget.CollapsingToolbarLayout>
 

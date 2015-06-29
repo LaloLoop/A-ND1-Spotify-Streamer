@@ -16,8 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mx.eduardogsilva.spotifystreamer.R;
-import mx.eduardogsilva.spotifystreamer.filters.ArtistsLiveFilter;
+import mx.eduardogsilva.spotifystreamer.filters.ArtistsFilter;
 import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
+import mx.eduardogsilva.spotifystreamer.transforms.CircleTransform;
 
 /**
  * Adapter to display artists info on ListView.
@@ -99,7 +100,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
      */
     @Override
     public Filter getFilter() {
-        return new ArtistsLiveFilter(this);
+        return new ArtistsFilter(this);
     }
 
     /**
@@ -128,9 +129,17 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
 
             // Load image
             if(!thumbImage.isEmpty()){
-                Picasso.with(context).load(thumbImage).into(artistImage);
+                Picasso.with(context)
+                        .load(thumbImage)
+                        .placeholder(R.mipmap.artist_placeholder)
+                        .error(R.mipmap.artist_error)
+                        .transform(new CircleTransform())
+                        .into(artistImage);
             }else {
-                artistImage.setImageResource(R.mipmap.ic_launcher);
+                Picasso.with(context)
+                        .load(R.mipmap.artist_default)
+                        .transform(new CircleTransform())
+                        .into(artistImage);
             }
         }
 

@@ -19,9 +19,9 @@ import retrofit.RetrofitError;
  * Filter for Live searching.
  * Created by Lalo on 12/06/15.
  */
-public class ArtistsLiveFilter extends Filter {
+public class ArtistsFilter extends Filter {
 
-    private static final String LOG_TAG = ArtistsLiveFilter.class.getSimpleName();
+    private static final String LOG_TAG = ArtistsFilter.class.getSimpleName();
 
     // Instance of service we will be using
     private final SpotifyService service;
@@ -33,7 +33,7 @@ public class ArtistsLiveFilter extends Filter {
     private OnDataFilteredListener dataFilteredListener;
 
     // Constructor
-    public ArtistsLiveFilter(ArtistsAdapter mArtistsAdapter) {
+    public ArtistsFilter(ArtistsAdapter mArtistsAdapter) {
         super();
         // Instantiate service we will be using.
         SpotifyApi wrapper = new SpotifyApi();

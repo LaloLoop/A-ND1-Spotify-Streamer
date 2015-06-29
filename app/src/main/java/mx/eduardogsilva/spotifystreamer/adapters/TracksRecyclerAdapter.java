@@ -154,9 +154,13 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public void bind(Track track, Context context){
             // load image if exists.
             if(!track.album.images.isEmpty()){
-                Picasso.with(context).load(track.album.images.get(0).url).into(albumImage);
+                Picasso.with(context)
+                        .load(track.album.images.get(0).url)
+                        .placeholder(R.mipmap.track_placeholder)
+                        .error(R.mipmap.track_error)
+                        .into(albumImage);
             }else {
-                albumImage.setImageResource(R.mipmap.ic_launcher);
+                albumImage.setImageResource(R.mipmap.track_default);
             }
 
             albumNameTextView.setText(track.album.name);
