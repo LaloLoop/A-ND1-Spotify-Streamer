@@ -13,8 +13,8 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 
-import kaaes.spotify.webapi.android.models.Track;
 import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
 
 /**
  * Tracks adapter for recycler view.
@@ -23,7 +23,7 @@ import mx.eduardogsilva.spotifystreamer.R;
 public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // Tracks data
-    private List<Track> tracks;
+    private List<TrackWrapper> tracks;
     // For use in picasso
     private Context context;
 
@@ -100,7 +100,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if(!tracks.isEmpty()){
-            Track track = tracks.get(position);
+            TrackWrapper track = tracks.get(position);
             TrackViewHolder tvh = (TrackViewHolder) holder;
             tvh.bind(track, context);
         }
@@ -120,7 +120,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      * Updates track data
      * @param tracks    tracks to handle
      */
-    public void setTracks(List<Track> tracks) {
+    public void setTracks(List<TrackWrapper> tracks) {
         this.tracks = tracks;
         super.notifyDataSetChanged();
     }
@@ -131,6 +131,10 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      */
     public void setIsLoading(boolean isLoading) {
         this.isLoading = isLoading;
+    }
+
+    public List<TrackWrapper> getTracks() {
+        return tracks;
     }
 
     /**
@@ -147,15 +151,15 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             super(itemView);
 
             albumImage = (ImageView) itemView.findViewById(R.id.list_item_track_imageview);
-            albumNameTextView = (TextView) itemView.findViewById(R.id.list_item_track_name);
-            trackNameTextView = (TextView) itemView.findViewById(R.id.list_item_track_album);
+            albumNameTextView = (TextView) itemView.findViewById(R.id.list_item_track_album);
+            trackNameTextView = (TextView) itemView.findViewById(R.id.list_item_track_name);
         }
 
-        public void bind(Track track, Context context){
+        public void bind(TrackWrapper track, Context context){
             // load image if exists.
-            if(!track.album.images.isEmpty()){
+            if(!track.getThumbImage().isEmpty()){
                 Picasso.with(context)
-                        .load(track.album.images.get(0).url)
+                        .load(track.getThumbImage())
                         .placeholder(R.mipmap.track_placeholder)
                         .error(R.mipmap.track_error)
                         .into(albumImage);
@@ -163,7 +167,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 albumImage.setImageResource(R.mipmap.track_default);
             }
 
-            albumNameTextView.setText(track.album.name);
+            albumNameTextView.setText(track.getAlbumName());
             trackNameTextView.setText(track.name);
         }
     }

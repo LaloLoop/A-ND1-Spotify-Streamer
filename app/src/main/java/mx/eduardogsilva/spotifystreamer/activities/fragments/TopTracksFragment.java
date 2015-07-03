@@ -26,15 +26,19 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.adapters.TracksRecyclerAdapter;
+import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
 import retrofit.RetrofitError;
 
 
@@ -70,7 +74,8 @@ public class TopTracksFragment extends Fragment {
 
     // State for recycler view
     private Parcelable mTracksState = null;
-    private final static String BUNDLE_TRACKS_STATE = "tracksState";
+    private final static String BUNDLE_TRACKS_LV_STATE = "tracksState";
+    private final static String BUNDLE_TRACKS_DATA = "tracksList";
 
     /**
      * Use this factory method to create a new instance of
@@ -161,22 +166,39 @@ public class TopTracksFragment extends Fragment {
             imageView.setImageResource(R.mipmap.default_banner);
         }
 
+        // Restore tracks list data.
+        if(savedInstanceState != null) {
+            ArrayList<TrackWrapper> tracks = savedInstanceState.getParcelableArrayList(BUNDLE_TRACKS_DATA);
+            if(tracks != null) {
+                mTracksAdapter.setIsLoading(false);
+                mTracksAdapter.setTracks(tracks);
+            }
+            mTracksState = savedInstanceState.getParcelable(BUNDLE_TRACKS_LV_STATE);
+            if(mTracksState != null) {
+                mLayoutManager.onRestoreInstanceState(mTracksState);
+            }
+        } else {
+            // Query top tracks data.
+            updateTracks(artistId);
+        }
+
         return rootView;
     }
 
     @Override
     public void onStart() {
         super.onStart();
-
-        updateTracks(artistId);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
 
+        // Save list view position.
         mTracksState = mLayoutManager.onSaveInstanceState();
+        outState.putParcelable(BUNDLE_TRACKS_LV_STATE, mTracksState);
 
-        outState.putParcelable(BUNDLE_TRACKS_STATE, mTracksState);
+        // Save tracks data.
+        outState.putParcelableArrayList(BUNDLE_TRACKS_DATA, (ArrayList<? extends Parcelable>) mTracksAdapter.getTracks());
 
         super.onSaveInstanceState(outState);
     }
@@ -185,11 +207,8 @@ public class TopTracksFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if(savedInstanceState != null){
-            mTracksState = savedInstanceState.getParcelable(BUNDLE_TRACKS_STATE);
-        } else {
-            mTracksState = null;
-        }
+        // Query top tracks data.
+        //updateTracks(artistId);
     }
 
     /**
@@ -244,7 +263,7 @@ public class TopTracksFragment extends Fragment {
         public void onFragmentInteraction(Uri uri);
     }
 
-    private class TracksDownloadTask extends AsyncTask<String, Void, Tracks> {
+    private class TracksDownloadTask extends AsyncTask<String, Void, List<TrackWrapper>> {
         private SpotifyApi spotifyApi;
         private SpotifyService spotifyService;
         private final String LOG_TAG = TracksDownloadTask.class.getSimpleName();
@@ -257,7 +276,7 @@ public class TopTracksFragment extends Fragment {
         }
 
         @Override
-        protected Tracks doInBackground(String... params) {
+        protected List<TrackWrapper> doInBackground(String... params) {
 
             // Get artist Id an country
             if(params[0] == null || params[1] == null){
@@ -281,18 +300,24 @@ public class TopTracksFragment extends Fragment {
                 e.printStackTrace();
             }
 
-            return tracks;
+            ArrayList<TrackWrapper> tracksWrapped = new ArrayList<>();
+
+            if(tracks != null){
+                for(Track t : tracks.tracks){
+                    tracksWrapped.add(new TrackWrapper(t));
+                }
+            }
+
+            return tracksWrapped;
         }
 
         @Override
-        protected void onPostExecute(Tracks tracks) {
+        protected void onPostExecute(List<TrackWrapper> tracks) {
             super.onPostExecute(tracks);
-
-            //loadingView.setVisibility(View.GONE);
 
             if(tracks != null){
                 mTracksAdapter.setIsLoading(false);
-                mTracksAdapter.setTracks(tracks.tracks);
+                mTracksAdapter.setTracks(tracks);
 
                 // Restore position.
                 if(mTracksState != null){

@@ -17,11 +17,13 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity;
 import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
 import mx.eduardogsilva.spotifystreamer.filters.ArtistsFilter;
-import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
+import mx.eduardogsilva.spotifystreamer.model.ArtistWrapper;
 
 import static android.widget.AdapterView.OnItemClickListener;
 import static mx.eduardogsilva.spotifystreamer.filters.ArtistsFilter.OnDataFilteredListener;
@@ -63,6 +65,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     private Parcelable mListState = null;
 
     // Bundle keys
+    private static final String BUNDLE_ARTISTS = "artistsList";
     private static final String BUNDLE_QUERY = "queryString";
     private static final String BUNDLE_SV_ICONIFIED = "svIconified";
 
@@ -92,6 +95,15 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         // Request menu options event
         setHasOptionsMenu(true);
 
+        // Restore artist list.
+        if(savedInstanceState != null){
+            ArrayList<ArtistWrapper> artist = savedInstanceState.getParcelableArrayList(BUNDLE_ARTISTS);
+            if(artist != null){
+                mArtistsAdapter.replaceAll(artist);
+            }
+            mListState = savedInstanceState.getParcelable(EXTRA_ARTIST_LV_STATE);
+        }
+
         return rootView;
     }
 
@@ -103,6 +115,11 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         artistsFilter = (ArtistsFilter) mArtistsAdapter.getFilter();
         // Set listener to check when data is updated
         artistsFilter.setDataFilteredListener(this);
+
+        // If we have a list state, restore it.
+        if(mListState != null){
+            artistsListView.onRestoreInstanceState(mListState);
+        }
 
     }
 
@@ -120,8 +137,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         // Save ListView position
         mListState = artistsListView.onSaveInstanceState();
         outState.putParcelable(EXTRA_ARTIST_LV_STATE, mListState);
-        // Prevent using this if the activity is not recreated.
-        mListState = null;
+
+        // Save artist data.
+        outState.putParcelableArrayList(BUNDLE_ARTISTS, (ArrayList<? extends Parcelable>) mArtistsAdapter.getArtists());
 
         super.onSaveInstanceState(outState);
     }
@@ -132,12 +150,10 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         if(savedInstanceState != null){
             currentSearchQuery = savedInstanceState.getString(BUNDLE_QUERY);
             iconified = savedInstanceState.getBoolean(BUNDLE_SV_ICONIFIED);
-            mListState = savedInstanceState.getParcelable(EXTRA_ARTIST_LV_STATE);
 
         }else {
             currentSearchQuery = "";
             iconified = true;
-            mListState = null;
         }
     }
 
@@ -154,7 +170,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
             searchView.setQueryHint(getString(R.string.hint_artist_name));
 
             // Restore search state
-            searchView.setQuery(currentSearchQuery, true);
+            searchView.setQuery(currentSearchQuery, false);
             searchView.setIconified(iconified);
             searchView.clearFocus();
         }
@@ -163,7 +179,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     // Listener to catch artist items clicks
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        ArtistImageSort artist = (ArtistImageSort) mArtistsAdapter.getItem(position);
+        ArtistWrapper artist = (ArtistWrapper) mArtistsAdapter.getItem(position);
 
         // Create intent and launch tracks activity.
         Intent tracksIntent = new Intent(getActivity(), TopTracksActivity.class);
@@ -177,6 +193,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     // Listeners for SearchView
     @Override
     public boolean onQueryTextSubmit(String query) {
+
         currentSearchQuery = query;
 
         artistsListView.setVisibility(View.GONE);
@@ -204,16 +221,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
 
         artistsListView.setVisibility(View.VISIBLE);
 
-        // Restore list state
-        // If we have a list state, restore it.
-        if(mListState != null){
-            artistsListView.onRestoreInstanceState(mListState);
-            mListState = null;
-        }
-        // By default set top position.
-        else {
-            artistsListView.smoothScrollToPosition(0);
-        }
+        // Set top position.
+        artistsListView.smoothScrollToPosition(0);
+
 
     }
 

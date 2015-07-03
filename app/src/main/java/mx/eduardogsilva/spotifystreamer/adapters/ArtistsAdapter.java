@@ -17,7 +17,7 @@ import java.util.List;
 
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.filters.ArtistsFilter;
-import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
+import mx.eduardogsilva.spotifystreamer.model.ArtistWrapper;
 import mx.eduardogsilva.spotifystreamer.transforms.CircleTransform;
 
 /**
@@ -28,7 +28,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
 
     private static final String LOG_TAG = ArtistsAdapter.class.getSimpleName();
     // Model - artists to handle
-    private List<ArtistImageSort> artists;
+    private List<ArtistWrapper> artists;
     // layout inflater to create views on getView method
     private LayoutInflater inflater;
     // Context to create the inflater and picasso reference
@@ -71,7 +71,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
             viewHolder = (ArtistViewHolder) convertView.getTag();
         }
 
-        ArtistImageSort artist = artists.get(position);
+        ArtistWrapper artist = artists.get(position);
 
         viewHolder.bind(artist, context);
 
@@ -82,7 +82,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
      * Replaces al items in the adapter
      * @param artists   Artists to substitute current data set.
      */
-    public void replaceAll(List<ArtistImageSort> artists){
+    public void replaceAll(List<ArtistWrapper> artists){
         this.artists = artists;
         super.notifyDataSetChanged();
     }
@@ -112,6 +112,10 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
         return artists.get(position).id;
     }
 
+    public List<ArtistWrapper> getArtists() {
+        return artists;
+    }
+
     /* View Holder for artists */
     private static class ArtistViewHolder {
         public ImageView artistImage;
@@ -122,7 +126,7 @@ public class ArtistsAdapter extends BaseAdapter implements Filterable{
             artistName = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
         }
 
-        public void bind(ArtistImageSort artist, Context context) {
+        public void bind(ArtistWrapper artist, Context context) {
             artistName.setText(artist.name);
 
             String thumbImage = artist.getThumbImage();

@@ -12,7 +12,7 @@ import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import mx.eduardogsilva.spotifystreamer.adapters.ArtistsAdapter;
-import mx.eduardogsilva.spotifystreamer.model.ArtistImageSort;
+import mx.eduardogsilva.spotifystreamer.model.ArtistWrapper;
 import retrofit.RetrofitError;
 
 /**
@@ -80,14 +80,14 @@ public class ArtistsFilter extends Filter {
     }
 
     private Object toArtistImageSort(List<Artist> items) {
-        List<ArtistImageSort> artistImageSorts = new ArrayList<>(items.size());
+        List<ArtistWrapper> artistWrappers = new ArrayList<>(items.size());
 
         for(Artist a : items){
-            ArtistImageSort ais = new ArtistImageSort(a);
-            artistImageSorts.add(ais);
+            ArtistWrapper ais = new ArtistWrapper(a);
+            artistWrappers.add(ais);
         }
 
-        return artistImageSorts;
+        return artistWrappers;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class ArtistsFilter extends Filter {
 
                 if(artistsResults.count > 0){
 
-                    List<ArtistImageSort> artists = (List<ArtistImageSort>) artistsResults.values;
+                    List<ArtistWrapper> artists = (List<ArtistWrapper>) artistsResults.values;
                     mArtistsAdapter.replaceAll(artists);
 
                     if(dataFilteredListener != null){
