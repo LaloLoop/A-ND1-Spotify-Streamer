@@ -1,14 +1,25 @@
 package mx.eduardogsilva.spotifystreamer.activities;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import mx.eduardogsilva.spotifystreamer.R;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TopTracksActivity extends AppCompatActivity {
+import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.activities.fragments.TopTracksFragment;
+import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
+
+public class TopTracksActivity extends AppCompatActivity implements TopTracksFragment.OnTopTracksListener{
+
+    private final String LOG_TAG = TopTracksActivity.class.getSimpleName();
+
+    public static final String EXTRA_TRACKS = "etracks";
+    public static final String EXTRA_TRACK_POSITION = "cposition";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,5 +50,17 @@ public class TopTracksActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTrackClicked(int position, List<TrackWrapper> tracks) {
+        Intent topTracksIntent = getIntent();
+
+        Intent playIntent = new Intent(this, PlayerActivity.class);
+        playIntent.putExtras(topTracksIntent);
+        playIntent.putParcelableArrayListExtra(EXTRA_TRACKS, (ArrayList<? extends Parcelable>) tracks);
+        playIntent.putExtra(EXTRA_TRACK_POSITION, position);
+
+        startActivity(playIntent);
     }
 }

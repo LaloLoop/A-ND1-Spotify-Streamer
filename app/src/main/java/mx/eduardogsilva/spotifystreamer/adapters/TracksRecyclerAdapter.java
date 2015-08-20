@@ -34,14 +34,18 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private boolean isLoading;
 
+    // Listener for item clicks
+    TrackViewHolder.ITracksViewHolderClicks mTracksClicksListener;
+
     /**
      * Main constructor.
      * @param context   Context to inflate views.
      */
-    public TracksRecyclerAdapter(Context context) {
+    public TracksRecyclerAdapter(Context context, TrackViewHolder.ITracksViewHolderClicks listener) {
         this.tracks = new ArrayList<>();
         this.context = context;
         isLoading = true;
+        mTracksClicksListener = listener;
     }
 
     /**
@@ -80,7 +84,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             case TRACK_VIEW:
                 // Returns view for tracks.
                 View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_top_tracks, parent, false);
-                return new TrackViewHolder(itemView);
+                return new TrackViewHolder(itemView, mTracksClicksListener);
 
             default:
                 // Returns empty view.
@@ -102,7 +106,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         if(!tracks.isEmpty()){
             TrackWrapper track = tracks.get(position);
             TrackViewHolder tvh = (TrackViewHolder) holder;
-            tvh.bind(track, context);
+            tvh.bind(track, context, position);
         }
     }
 
@@ -140,22 +144,27 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     /**
      * Holder class to keep references to all subviews
      */
-    public class TrackViewHolder extends RecyclerView.ViewHolder {
+    public static class TrackViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         // Component views for tracks view.
         private ImageView albumImage;
         private TextView albumNameTextView;
         private TextView trackNameTextView;
+        private ITracksViewHolderClicks mListener;
+        private int mCurrentPosition;
 
-        public TrackViewHolder(View itemView) {
+        public TrackViewHolder(View itemView, ITracksViewHolderClicks listener) {
             super(itemView);
 
             albumImage = (ImageView) itemView.findViewById(R.id.list_item_track_imageview);
             albumNameTextView = (TextView) itemView.findViewById(R.id.list_item_track_album);
             trackNameTextView = (TextView) itemView.findViewById(R.id.list_item_track_name);
+            mListener = listener;
+
+            itemView.setOnClickListener(this);
         }
 
-        public void bind(TrackWrapper track, Context context){
+        public void bind(TrackWrapper track, Context context, int position){
             // load image if exists.
             if(!track.getThumbImage().isEmpty()){
                 Picasso.with(context)
@@ -169,9 +178,24 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
             albumNameTextView.setText(track.getAlbumName());
             trackNameTextView.setText(track.name);
+            mCurrentPosition = position;
+        }
+
+        @Override
+        public void onClick(View v) {
+            if(mListener != null) {
+                mListener.onItemClicked(mCurrentPosition);
+            }
+        }
+
+        public interface ITracksViewHolderClicks {
+            void onItemClicked(int position);
         }
     }
 
+    /**
+     * View holder to be shown when no tracks are available
+     */
     public class EmptyViewHolder extends RecyclerView.ViewHolder {
 
         public EmptyViewHolder(View itemView) {
@@ -179,6 +203,9 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
+    /**
+     * ViewHolder for loading animation
+     */
     public class LoadingViewHolder extends RecyclerView.ViewHolder {
 
         public LoadingViewHolder(View itemView) {

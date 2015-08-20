@@ -15,6 +15,10 @@ public class TrackWrapper extends Track implements Parcelable {
     private String thumbImage = "";
     private String largeImage = "";
     private String albumName = "";
+    private String artistName;
+    private String externalUrl = "";
+
+    private static final String EXTERNAL_URL = "spotify";
 
     public TrackWrapper(Track t) {
         this.album = t.album;
@@ -22,12 +26,15 @@ public class TrackWrapper extends Track implements Parcelable {
         this.popularity = t.popularity;
         this.id = t.id;
         this.name = t.name;
+        this.preview_url = t.preview_url;
+        this.external_urls = t.external_urls;
         // TODO add other properties.
 
         // Init aux fields
         getLargeImage();
         getThumbImage();
         getAlbumName();
+        getExternalUrl();
     }
 
     public String getThumbImage() {
@@ -51,6 +58,23 @@ public class TrackWrapper extends Track implements Parcelable {
         return albumName;
     }
 
+    public String getArtistName() {
+        return artistName;
+    }
+
+    public void setArtistName(String artistName) {
+        this.artistName = artistName;
+    }
+
+    public String getExternalUrl() {
+        if(externalUrl.isEmpty()) {
+            if(external_urls != null) {
+                externalUrl = external_urls.get(EXTERNAL_URL);
+            }
+        }
+        return externalUrl;
+    }
+
     /* Parcelable implementation */
 
     protected TrackWrapper(Parcel in) {
@@ -58,6 +82,9 @@ public class TrackWrapper extends Track implements Parcelable {
         largeImage = in.readString();
         albumName = in.readString();
         name = in.readString();
+        preview_url = in.readString();
+        artistName = in.readString();
+        externalUrl = in.readString();
     }
 
     public static final Creator<TrackWrapper> CREATOR = new Creator<TrackWrapper>() {
@@ -83,5 +110,8 @@ public class TrackWrapper extends Track implements Parcelable {
         dest.writeString(largeImage);
         dest.writeString(albumName);
         dest.writeString(name);
+        dest.writeString(preview_url);
+        dest.writeString(artistName);
+        dest.writeString(externalUrl);
     }
 }

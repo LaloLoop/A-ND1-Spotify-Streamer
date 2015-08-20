@@ -25,7 +25,7 @@ public class FilterUtils {
      */
     public static String imageInRange(List<Image> images, int minWidth, int maxWidth) {
 
-        if(images.isEmpty()){
+        if(images == null || images.isEmpty()){
             return "";
         }
 
