@@ -24,21 +24,24 @@
         android:layout_marginRight="@dimen/abc_list_item_padding_horizontal_material">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:text="Rumble On"
             android:layout_weight="1"
             android:gravity="bottom"
-            android:textSize="17sp"
-            android:id="@+id/list_item_track_name"/>
+            android:id="@+id/list_item_track_name"
+            android:textAppearance="@android:style/TextAppearance.Medium"
+            android:fontFamily="sans-serif-condensed"/>
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:text="Led Zeppelin IV"
             android:layout_weight="1"
             android:gravity="top"
-            android:id="@+id/list_item_track_album"/>
+            android:id="@+id/list_item_track_album"
+            android:textAppearance="@android:style/TextAppearance.Small"
+            android:fontFamily="sans-serif-condensed"/>
 
     </LinearLayout>
 
