@@ -123,6 +123,8 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
 
         setHasOptionsMenu(true);
 
+        Log.i(LOG_TAG, "onCreate");
+
         return rootView;
     }
 
@@ -138,8 +140,6 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
 
         if(mShareActionProvider != null && mTrackInfo != null) {
             mShareActionProvider.setShareIntent(createSongIntent());
-        } else {
-            Log.e(LOG_TAG, "ShareActionProvider is null!");
         }
     }
 
