@@ -1,17 +1,23 @@
 package mx.eduardogsilva.spotifystreamer.service;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.media.session.MediaSession;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,6 +26,7 @@ import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.PlayerActivity;
 import mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
+import mx.eduardogsilva.spotifystreamer.utilities.PrefsUtility;
 
 /**
  * Service to handle media player.
@@ -31,21 +38,54 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
     private static final String LOG_TAG = SpotifyPlayerService.class.getSimpleName();
 
     // Actions
-    public static final String ACTION_INSTANTIATE = "com.example.action.INSTANTIATE";
-    public static final String ACTION_INIT_PLAY = "com.example.action.INIT_PLAY";
+    public static final String ACTION_INSTANTIATE = "mx.eduardogsilva.action.INSTANTIATE";
+    public static final String ACTION_INIT_PLAY = "mx.eduardogsilva.action.INIT_PLAY";
+    public static final String ACTION_PLAY_PAUSE = "mx.eduardogsilva.action.PLAY_PAUSE";
+    public static final String ACTION_PREVIOUS = "mx.eduardogsilva.action.PREVIOUS";
+    public static final String ACTION_NEXT = "mx.eduardogsilva.action.NEXT";
+    public static final String ACTION_UPDATE_NOTIFICATION = "mx.eduardogsilva.action.UPDATE_NOTIF";
 
-    private NotificationManager nMn;
+    // Media session token
+    private static final String MEDIA_SESSION_TOKEN = "mx.eduardosilva.token.JLAKJS0";
 
     // Notification ID to handle it.
     private static final int STREAMER_NOTIFICATION_ID = 1;
 
     // Attributes
-    MediaPlayer mMediaPlayer = null;
+    // Media control
+    private MediaPlayer mMediaPlayer = null;
+    private MediaSession mMediaSession;
+
+    // Model
     String mArtistId = "";
     int mCurrentPosition = 0;
     List<TrackWrapper> mTracks;
     boolean mPrepared = false;
     boolean mPlaying = false;
+
+    // Preferences status
+    private String mLastLocation = "";
+
+    // Get image from picasso as bitmap
+    private Bitmap mAlbumArt;
+    private Target mTarget = new Target() {
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+            mAlbumArt = bitmap;
+            // Update whenever picasso is ready to show album art.
+            updateNotification();
+        }
+
+        @Override
+        public void onBitmapFailed(Drawable errorDrawable) {
+
+        }
+
+        @Override
+        public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+        }
+    };
 
     // Listeners
     OnAsyncServiceListener mListener;
@@ -61,6 +101,9 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
         }
     }
 
+    /**
+     * Interface to be implemented if notifications are required from the service.
+     */
     public interface OnAsyncServiceListener {
         void onPreparing(TrackWrapper track);
         void onPrepared(int duration, TrackWrapper trackPrepared);
@@ -72,45 +115,95 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
     @Override
     public void onCreate() {
         super.onCreate();
-
-        nMn = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent == null) {
-            return super.onStartCommand(intent, flags, startId);
+        if(mMediaPlayer == null) {
+            initMediaSession();
         }
+
+        handleIntent(intent);
+
+        return START_STICKY;
+    }
+
+    private void initMediaSession() {
+        initMediaPlayer();
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mMediaSession = new MediaSession(getApplicationContext(), MEDIA_SESSION_TOKEN);
+        }
+    }
+
+    private void handleIntent(Intent intent) {
+        if(intent == null || intent.getAction() == null) {
+            return;
+        }
+
         String action = intent.getAction();
 
         switch (action) {
 
             case ACTION_INIT_PLAY:
-                String artistId = intent.getStringExtra(TopTracksActivity.EXTRA_ARTIST_ID);
-                int position = intent.getIntExtra(TopTracksActivity.EXTRA_TRACK_POSITION, 0);
-                if(!mArtistId.equals(artistId)) {
-                    mArtistId = artistId;
-                    mTracks = intent.getParcelableArrayListExtra(TopTracksActivity.EXTRA_TRACKS);
-                    mCurrentPosition = position;
-
-                    playCurrentTrack();
-                } else if(mCurrentPosition != position) {
-                    mCurrentPosition = position;
-                    playCurrentTrack();
-                }
+                initAndPlay(intent);
+                break;
+            case ACTION_PLAY_PAUSE:
+                playPause();
+                updateNotification();
+                break;
+            case ACTION_NEXT:
+                nextTrack();
+                updateNotification();
+                break;
+            case ACTION_PREVIOUS:
+                prevTrack();
+                updateNotification();
+                break;
+            case ACTION_UPDATE_NOTIFICATION:
+                updateNotification();
                 break;
             default:
                 break;
         }
+    }
 
-        return START_STICKY;
+    private void initAndPlay(Intent intent) {
+        // Get current location
+        String location = PrefsUtility.getLocation(getApplicationContext());
+
+        String artistId = intent.getStringExtra(TopTracksActivity.EXTRA_ARTIST_ID);
+        int position = intent.getIntExtra(TopTracksActivity.EXTRA_TRACK_POSITION, 0);
+        if(!mLastLocation.equals(location) || !mArtistId.equals(artistId)) {
+
+            mLastLocation = location;
+
+            mArtistId = artistId;
+            mTracks = intent.getParcelableArrayListExtra(TopTracksActivity.EXTRA_TRACKS);
+            mCurrentPosition = position;
+            playCurrentTrack();
+
+        } else if(mCurrentPosition != position) {
+
+            mCurrentPosition = position;
+            playCurrentTrack();
+
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mMediaPlayer.reset();
+        mMediaPlayer.release();
+        mMediaPlayer = null;
+
+        Picasso.with(this).cancelRequest(mTarget);
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mMediaSession.release();
+        }
+
         stopForeground(true);
-        nMn.cancel(STREAMER_NOTIFICATION_ID);
     }
 
     @Nullable
@@ -134,10 +227,7 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
 
         // Reset media player
         if(mMediaPlayer == null) {
-            mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setOnPreparedListener(this);
-            mMediaPlayer.setOnCompletionListener(this);
-            mMediaPlayer.setOnErrorListener(this);
+            initMediaPlayer();
         } else {
             mMediaPlayer.reset();
         }
@@ -147,6 +237,7 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
 
             mMediaPlayer.setDataSource(track.preview_url);
             mMediaPlayer.prepareAsync();
+
             mPrepared = false;
             mPlaying = false;
 
@@ -159,6 +250,13 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
             mListener.onPreparing(track);
         }
 
+    }
+
+    private void initMediaPlayer() {
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
+        mMediaPlayer.setOnErrorListener(this);
     }
 
     public void playPause() {
@@ -235,14 +333,27 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        if(mListener != null) {
-            mListener.onPrepared(mp.getDuration(), getCurrentTrack());
+        // Load album art
+        TrackWrapper tw = getCurrentTrack();
+        String largeAlbum = tw.getLargeImage();
+        String mediumAlbum = tw.getThumbImage();
+
+        if(largeAlbum != null && !largeAlbum.isEmpty()){
+            Picasso.with(this).load(largeAlbum).into(mTarget);
+        } else if(mediumAlbum != null && !mediumAlbum.isEmpty()) {
+            // Fallback to medium.
+            Picasso.with(this).load(largeAlbum).into(mTarget);
         }
+
+        if(mListener != null) {
+            mListener.onPrepared(mp.getDuration(), tw);
+        }
+
         mPrepared = true;
         mp.start();
         mPlaying = true;
 
-        showNotification();
+        updateNotification();
     }
 
     @Override
@@ -251,6 +362,7 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
         if(mListener != null) {
             mListener.onCompletion();
         }
+        updateNotification();
     }
 
     @Override
@@ -260,12 +372,19 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
         return false;
     }
 
-    public void setOnAsyncServiceistener(OnAsyncServiceListener mListener) {
+    public void setOnAsyncServiceListener(OnAsyncServiceListener mListener) {
         this.mListener = mListener;
     }
 
     /* ===== NOTIFICATION ===== */
-    private void showNotification() {
+    private void updateNotification() {
+        boolean displayNotifications = PrefsUtility.getNotificationsEnabled(getApplicationContext());
+
+        if(!displayNotifications) {
+            stopForeground(true);
+            return;
+        }
+
         TrackWrapper cTrack = getCurrentTrack();
 
         Intent resultIntent = new Intent(getApplicationContext(), PlayerActivity.class);
@@ -276,19 +395,65 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
                 resultIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+        Notification notification;
 
-        builder.setSmallIcon(R.mipmap.ic_launcher);
-        builder.setOngoing(true);
-        builder.setTicker("Lalo");
-        builder.setContentTitle(cTrack.name);
-        builder.setContentText(cTrack.getAlbumName());
-        builder.setContentIntent(contentIntent).build();
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
-        Notification notification = builder.build();
+            Notification.MediaStyle mediaStyle = new Notification.MediaStyle();
+            mediaStyle.setShowActionsInCompactView(0, 1, 2);
+            mediaStyle.setMediaSession(mMediaSession.getSessionToken());
+
+
+            Notification.Builder builder = new Notification.Builder(getApplicationContext());
+            // Show controls on lock screen even when user hides sensitive content.
+            builder.setVisibility(Notification.VISIBILITY_PUBLIC);
+            builder.setSmallIcon(R.mipmap.ic_launcher);
+            builder.addAction(
+                    android.R.drawable.ic_media_previous,
+                    "Previous",
+                    buildPendingIntent(ACTION_PREVIOUS)); // #0 Prev button
+            builder.addAction(
+                    (mPlaying)?android.R.drawable.ic_media_pause:android.R.drawable.ic_media_play,
+                    (mPlaying)?"Pause":"Play",
+                    buildPendingIntent(ACTION_PLAY_PAUSE));  // #1 Pause button
+            builder.addAction(
+                    android.R.drawable.ic_media_next,
+                    "Next",
+                    buildPendingIntent(ACTION_NEXT));     // #2 Next button
+            // Apply the media style template
+            builder.setStyle(mediaStyle);
+            builder.setContentTitle(cTrack.name);
+            builder.setContentText(cTrack.getAlbumName());
+            builder.setContentIntent(contentIntent);
+
+            if(mAlbumArt != null) {
+                builder.setLargeIcon(mAlbumArt);
+            }
+
+            notification = builder.build();
+        } else {
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+
+            builder.setSmallIcon(R.mipmap.ic_launcher);
+            builder.setOngoing(true);
+            builder.setTicker(getString(R.string.app_name));
+            builder.setContentTitle(cTrack.name);
+            builder.setContentText(cTrack.getAlbumName());
+            builder.setContentIntent(contentIntent).build();
+
+            notification = builder.build();
+        }
 
         startForeground(STREAMER_NOTIFICATION_ID, notification);
 
+    }
+
+    private PendingIntent buildPendingIntent(String action) {
+        Intent intent = new Intent(getApplicationContext(), SpotifyPlayerService.class);
+        intent.setAction(action);
+
+        return PendingIntent.getService(getApplicationContext(), 1, intent, 0);
     }
 
 }

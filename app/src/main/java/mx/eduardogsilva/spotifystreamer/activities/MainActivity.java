@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
     protected void onResume() {
         super.onResume();
         if(mBoundService != null) {
-            mBoundService.setOnAsyncServiceistener(this);
+            mBoundService.setOnAsyncServiceListener(this);
             invalidateOptionsMenu();
         } else {
             doBindService();
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
 
     private void doUnbindService() {
         if(mIsBound) {
-            mBoundService.setOnAsyncServiceistener(null);
+            mBoundService.setOnAsyncServiceListener(null);
             unbindService(mConnection);
             mIsBound = false;
         }

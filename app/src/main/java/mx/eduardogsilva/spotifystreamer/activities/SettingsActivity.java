@@ -1,5 +1,7 @@
 package mx.eduardogsilva.spotifystreamer.activities;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -12,6 +14,7 @@ import android.preference.RingtonePreference;
 import android.text.TextUtils;
 
 import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.service.SpotifyPlayerService;
 
 
 /**
@@ -25,7 +28,7 @@ import mx.eduardogsilva.spotifystreamer.R;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener{
 
 
     private final String LOG_TAG = SettingsActivity.class.getSimpleName();
@@ -38,6 +41,8 @@ public class SettingsActivity extends PreferenceActivity {
 
         // Bind changes notifications
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_key_location)));
+
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
     /**
@@ -111,5 +116,15 @@ public class SettingsActivity extends PreferenceActivity {
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(key.equals(getString(R.string.pref_enable_notifications_key))) {
+            // Tell service to hide notification
+            Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
+            serviceIntent.setAction(SpotifyPlayerService.ACTION_UPDATE_NOTIFICATION);
+            startService(serviceIntent);
+        }
     }
 }
