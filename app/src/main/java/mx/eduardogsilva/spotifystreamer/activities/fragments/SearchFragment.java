@@ -1,5 +1,6 @@
 package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -68,6 +69,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     private static final String BUNDLE_ARTISTS = "artistsList";
     private static final String BUNDLE_QUERY = "queryString";
     private static final String BUNDLE_SV_ICONIFIED = "svIconified";
+
+    // UI Events listener
+    private OnSearchListener mListener;
 
     public SearchFragment() {
     }
@@ -158,6 +162,23 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnSearchListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnSearchListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
 
@@ -187,7 +208,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         tracksIntent.putExtra(EXTRA_ARTIST_NAME, artist.name);
         tracksIntent.putExtra(EXTRA_ARTIST_IMAGE_URL, artist.getLargeImage());
 
-        startActivity(tracksIntent);
+        if(mListener != null) {
+            mListener.onItemSelected(tracksIntent);
+        }
     }
 
     // Listeners for SearchView
@@ -238,5 +261,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         loadingView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
         Toast.makeText(getActivity(), R.string.error_search_artists, Toast.LENGTH_LONG).show();
+    }
+
+    public interface OnSearchListener {
+        void onItemSelected(Intent intent);
     }
 }

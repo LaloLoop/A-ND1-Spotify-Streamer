@@ -12,11 +12,16 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.List;
+
 import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.activities.fragments.SearchFragment;
+import mx.eduardogsilva.spotifystreamer.activities.fragments.TopTracksFragment;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
 import mx.eduardogsilva.spotifystreamer.service.SpotifyPlayerService;
 
-public class MainActivity extends AppCompatActivity implements SpotifyPlayerService.OnAsyncServiceListener{
+public class MainActivity extends AppCompatActivity implements SpotifyPlayerService.OnAsyncServiceListener,
+        SearchFragment.OnSearchListener, TopTracksFragment.OnTopTracksListener {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
@@ -24,6 +29,15 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
     private SpotifyPlayerService mBoundService;
     private boolean mIsBound = false;
 
+    // Fragments and pane mode
+    private boolean mTwoPane;
+    // Fragments tags
+    private static final String TOPTRACKSFRAGMENT_TAG = "TTF";
+
+    // Bundle extras
+    public final static String EXTRA_TWO_PANE = "etpm";
+
+    // Service connection
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -36,19 +50,31 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
         }
     };
 
+    /* ===== LIFECYCLE METHODS ===== */
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
-        serviceIntent.setAction(SpotifyPlayerService.ACTION_INSTANTIATE);
-        startService(serviceIntent);
-
         // Set the toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
-        Log.i(LOG_TAG, "onCreate");
+
+        // Get Fragments
+        if(findViewById(R.id.top_tracks_container) != null) {
+            mTwoPane = true;
+            if(savedInstanceState == null) {
+                getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.top_tracks_container, new TopTracksFragment(), TOPTRACKSFRAGMENT_TAG)
+                    .commit();
+            }
+        }
+
+        // Start service for all activities to bind
+        Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
+        serviceIntent.setAction(SpotifyPlayerService.ACTION_INSTANTIATE);
+        startService(serviceIntent);
     }
 
     @Override
@@ -60,6 +86,8 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
         } else {
             doBindService();
         }
+
+        // TODO Update when location changes.
     }
 
     @Override
@@ -71,7 +99,12 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
     @Override
     protected void onDestroy() {
         super.onDestroy();
+//        Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
+//        serviceIntent.setAction(SpotifyPlayerService.ACTION_STOP);
+//        stopService(serviceIntent);
     }
+
+    /* ===== MENU METHODS ===== */
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -125,6 +158,8 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
         return super.onOptionsItemSelected(item);
     }
 
+    /* ===== SERVICE BINDING ===== */
+
     private void doBindService() {
         Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
 
@@ -140,6 +175,8 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
         }
     }
 
+    /* ===== SERVICE CALLBACKS ===== */
+
     @Override
     public void onPreparing(TrackWrapper track) {
 
@@ -153,5 +190,29 @@ public class MainActivity extends AppCompatActivity implements SpotifyPlayerServ
     @Override
     public void onCompletion() {
         invalidateOptionsMenu();
+    }
+
+    /* ===== SEARCH FRAGMENT CALLBACKS ===== */
+
+    @Override
+    public void onItemSelected(Intent intent) {
+        intent.putExtra(EXTRA_TWO_PANE, mTwoPane);
+
+        if(mTwoPane) {
+            // Replace top tracks fragment
+            getSupportFragmentManager().beginTransaction().replace(
+                    R.id.top_tracks_container,
+                    TopTracksFragment.newInstance(intent),
+                    TOPTRACKSFRAGMENT_TAG
+            ).commit();
+        } else {
+            // Launch activity
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onTrackClicked(String artistId, int position, List<TrackWrapper> tracks) {
+        Log.d(LOG_TAG, "Track selected!");
     }
 }
