@@ -60,6 +60,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
     // Layout manager for elements placing in recycler view
     private RecyclerView.LayoutManager mLayoutManager;
 
+    private String mArtistId;
     private String mArtistName;
 
     // State for recycler view
@@ -85,7 +86,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
 
         // Get intent to obtain artist id
         Intent intent = getActivity().getIntent();
-        String artistId = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_ID);
+        mArtistId = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_ID);
         mArtistName = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_NAME);
         String artistImageUrl = intent.getStringExtra(SearchFragment.EXTRA_ARTIST_IMAGE_URL);
 
@@ -151,7 +152,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
             }
         } else {
             // Query top tracks data.
-            updateTracks(artistId);
+            updateTracks(mArtistId);
         }
 
         return rootView;
@@ -213,7 +214,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
 
     @Override
     public void onItemClicked(int position) {
-        mListener.onTrackClicked(position, mTracksAdapter.getTracks());
+        mListener.onTrackClicked(mArtistId, position, mTracksAdapter.getTracks());
     }
 
     /**
@@ -227,7 +228,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnTopTracksListener {
-        void onTrackClicked(int position, List<TrackWrapper> tracks);
+        void onTrackClicked(String artistId, int position, List<TrackWrapper> tracks);
     }
 
     private class TracksDownloadTask extends AsyncTask<String, Void, List<TrackWrapper>> {

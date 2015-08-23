@@ -2,7 +2,6 @@ package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -19,11 +18,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
-
-import java.io.IOException;
 
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
@@ -31,12 +27,12 @@ import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedListener,
-        MediaPlayer.OnCompletionListener, View.OnClickListener, MediaPlayer.OnErrorListener {
+public class PlayerFragment extends Fragment implements View.OnClickListener {
 
     private static final String LOG_TAG = PlayerFragment.class.getSimpleName();
 
     private ShareActionProvider mShareActionProvider;
+    // Share information
     private String mTrackInfo;
 
     // Views
@@ -51,11 +47,11 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
     private TextView mCurrentTimeTextView;
     private TextView mTotalTimeTextView;
 
-    private MediaPlayer mMediaPlayer;
-
     private Handler mHandler = new Handler();
 
     private OnPlayerInteractionListener mListener;
+
+    private boolean mPlaying = false;
 
     public PlayerFragment() {
     }
@@ -84,8 +80,8 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (mMediaPlayer != null && fromUser) {
-                    mMediaPlayer.seekTo(progress * 1000);
+                if (mListener != null && fromUser) {
+                    mListener.onSeekTo(progress);
                 }
             }
 
@@ -99,6 +95,31 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
 
             }
         });
+
+        Runnable updateProgress = new Runnable() {
+            @Override
+            public void run() {
+                if(mListener != null) {
+                    try{
+
+                        int currentPosition = mListener.getCurrentPosition() / 1000;
+
+                        mSeekBar.setProgress(currentPosition);
+
+                        mCurrentTimeTextView.setText(getString(R.string.format_time, currentPosition));
+
+                    } catch(IllegalStateException e) {
+                        return;
+                    }
+                }
+                mHandler.postDelayed(this, 1000);
+            }
+        };
+
+        getActivity().runOnUiThread(updateProgress);
+
+        // By default lock controls
+        lockControls(true);
 
         setHasOptionsMenu(true);
 
@@ -130,9 +151,6 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
     @Override
     public void onStop() {
         super.onStop();
-        mMediaPlayer.reset();
-        mMediaPlayer.release();
-        mMediaPlayer = null;
     }
 
     @Override
@@ -156,40 +174,32 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.playpause_button:
-                onPlayPauseClicked();
+                playPause(!mPlaying);
+                mListener.onPlayPauseClicked();
             break;
             case R.id.next_button:
+                playPause(false);
                 mListener.onNextTrackClicked();
             break;
             case R.id.prev_button:
+                playPause(!false);
                 mListener.onPrevTrackClicked();
             break;
         }
     }
 
-    public void onPlayPauseClicked() {
-        if(mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-            mPlayPauseButton.setImageResource(android.R.drawable.ic_media_play);
-        } else {
-            mMediaPlayer.start();
+    public void playPause(boolean playing) {
+        mPlaying = playing;
+        if(playing) {
             mPlayPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+        } else {
+            mPlayPauseButton.setImageResource(android.R.drawable.ic_media_play);
         }
     }
 
-    public void playTrack(TrackWrapper track) {
+    public void bindTrackData(TrackWrapper track) {
         if(track == null) {
             return;
-        }
-
-        // Reset media player
-        if(mMediaPlayer == null) {
-            mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setOnPreparedListener(this);
-            mMediaPlayer.setOnCompletionListener(this);
-            mMediaPlayer.setOnErrorListener(this);
-        } else {
-            mMediaPlayer.reset();
         }
 
         // Bind view
@@ -198,22 +208,8 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
         mSongNameTextView.setText(track.name);
         Picasso.with(getActivity()).load(track.getLargeImage()).into(mAlbumImageView);
 
-        // SetUp Media Player
-        try {
-
-            mMediaPlayer.setDataSource(track.preview_url);
-            mMediaPlayer.prepareAsync();
-
-        } catch(IOException e) {
-            Log.e(LOG_TAG, "Could not open media " + track.preview_url, e);
-            Toast.makeText(getActivity(), "Could not play media", Toast.LENGTH_SHORT).show();
-        }
-
-        // Lock controls
-        mPlayPauseButton.setClickable(false);
-        mSeekBar.setEnabled(false);
-
-        mTrackInfo = getString(R.string.format_share, track.name, track.getArtistName(), track.getExternalUrl());
+        mTrackInfo = getString(R.string.format_share, track.name, track.getArtistName(),
+                track.getExternalUrl());
 
         // Set Share data
         if(mShareActionProvider != null && mTrackInfo != null) {
@@ -222,6 +218,12 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
             Log.e(LOG_TAG, "ShareActionProvider is null!");
         }
     }
+
+    public void lockControls(boolean lock) {
+        // Lock controls
+        mPlayPauseButton.setClickable(!lock);
+        mSeekBar.setEnabled(!lock);
+    };
 
     private Intent createSongIntent() {
 
@@ -233,58 +235,24 @@ public class PlayerFragment extends Fragment implements MediaPlayer.OnPreparedLi
         return shareIntent;
     }
 
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        int duration = mp.getDuration();
+    public void setSeekbarMaxDuration(int duration) {
         duration = (duration == -1)? 30 : (duration / 1000);
         mSeekBar.setMax(duration);
+
         mTotalTimeTextView.setText(getString(R.string.format_time, duration));
-
-        mp.start();
-        mPlayPauseButton.setImageResource(android.R.drawable.ic_media_pause);
-
-        // Unlock UI.
-        mPlayPauseButton.setClickable(true);
-        mSeekBar.setEnabled(true);
-
-        Runnable updateProgress = new Runnable() {
-            @Override
-            public void run() {
-                if(mMediaPlayer != null) {
-                    try{
-
-                        int currentPosition = mMediaPlayer.getCurrentPosition() / 1000;
-
-                        mSeekBar.setProgress(currentPosition);
-
-                        mCurrentTimeTextView.setText(getString(R.string.format_time, currentPosition));
-
-                    } catch(IllegalStateException e) {
-                        return;
-                    }
-                }
-                mHandler.postDelayed(this, 1000);
-            }
-        };
-
-        getActivity().runOnUiThread(updateProgress);
-
     }
 
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        mPlayPauseButton.setImageResource(android.R.drawable.ic_media_play);
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        Toast.makeText(getActivity(), "An error occurred while downloading the track preview",
-                Toast.LENGTH_SHORT).show();
-        return false;
-    }
-
+    /**
+     * Interface to listen for UI interaction and ask for properties.
+     */
     public interface OnPlayerInteractionListener {
+        // Events
+        void onSeekTo(int position);
+        void onPlayPauseClicked();
         void onNextTrackClicked();
         void onPrevTrackClicked();
+
+        // Get info from implementor
+        int getCurrentPosition();
     }
 }

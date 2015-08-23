@@ -56,6 +56,11 @@
                 android:value="mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity" />
         </activity>
 
+        <!-- Player service -->
+        <service android:name=".service.SpotifyPlayerService"
+            android:exported="false"
+            android:enabled="true"/>
+
     </application>
 
 </manifest>
