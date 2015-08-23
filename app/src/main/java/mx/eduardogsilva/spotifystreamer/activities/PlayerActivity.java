@@ -54,21 +54,25 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
 
         mPf = (PlayerFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_player);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
 
         // Bind with the service;
         doBindService();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        doUnbindService();
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        doUnbindService();
     }
 
     /* ==== AUXILIARY METHODS ==== */
