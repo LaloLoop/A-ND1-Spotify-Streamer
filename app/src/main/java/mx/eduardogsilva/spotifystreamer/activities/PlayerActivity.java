@@ -1,75 +1,152 @@
 package mx.eduardogsilva.spotifystreamer.activities;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-
-import java.util.List;
 
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.fragments.PlayerFragment;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
+import mx.eduardogsilva.spotifystreamer.service.SpotifyPlayerService;
 
-public class PlayerActivity extends AppCompatActivity implements PlayerFragment.OnPlayerInteractionListener{
+public class PlayerActivity extends AppCompatActivity implements PlayerFragment.OnPlayerInteractionListener,
+        SpotifyPlayerService.OnAsyncServiceListener{
 
     private static final String LOG_TAG = PlayerActivity.class.getSimpleName();
 
-    private List<TrackWrapper> mTracks;
-    private int mCurrentPosition;
+    // Service
+    private SpotifyPlayerService mBoundService;
 
+    // View / Fragment
+    private PlayerFragment mPf;
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBoundService = ((SpotifyPlayerService.PlayerBinder)service).getService(PlayerActivity.this);
+
+            mPf.bindTrackData(mBoundService.getCurrentTrack());
+
+            // Init service with new data only if user selected a new track.
+            if(mBoundService.isPrepared()) {
+                mPf.lockControls(false);
+                mPf.setSeekbarMaxDuration(mBoundService.getDuration());
+                mPf.playPause(true);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBoundService = null;
+        }
+    };
+    private  boolean mIsBound = false;
+
+    /* ==== LIFE CYCLE METHODS ==== */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
-        Intent playerIntent = getIntent();
-
-        mTracks = playerIntent.getParcelableArrayListExtra(TopTracksActivity.EXTRA_TRACKS);
-        mCurrentPosition = playerIntent.getIntExtra(TopTracksActivity.EXTRA_TRACK_POSITION, 0);
-
+        mPf = (PlayerFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_player);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        TrackWrapper currentTrack = mTracks.get(mCurrentPosition);
 
-        playTrack(currentTrack);
+        // Bind with the service;
+        doBindService();
     }
 
-    private void playTrack(TrackWrapper currentTrack) {
-        PlayerFragment pf = (PlayerFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_player);
 
-        if(pf != null) {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        doUnbindService();
+    }
 
-            pf.playTrack(currentTrack);
+    /* ==== AUXILIARY METHODS ==== */
+
+    private void doBindService() {
+        Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
+
+        bindService(serviceIntent, mConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
+    }
+
+    private void doUnbindService() {
+        if(mIsBound) {
+            mBoundService.setOnAsyncServiceistener(null);
+            unbindService(mConnection);
+            mIsBound = false;
+        }
+    }
+
+    /* ==== UI CALLBACK METHODS ==== */
+
+    @Override
+    public void onSeekTo(int position) {
+        if(mBoundService != null) {
+            mBoundService.seekTo(position);
+        }
+    }
+
+    @Override
+    public void onPlayPauseClicked() {
+        if(mBoundService != null) {
+            mBoundService.playPause();
         }
     }
 
     @Override
     public void onNextTrackClicked() {
-        changePosition(1);
-
-        TrackWrapper track = mTracks.get(mCurrentPosition);
-        playTrack(track);
+        if(mBoundService != null) {
+            mBoundService.nextTrack();
+        }
     }
 
     @Override
     public void onPrevTrackClicked() {
-        changePosition(-1);
-
-        TrackWrapper track = mTracks.get(mCurrentPosition);
-        playTrack(track);
+        if(mBoundService != null) {
+            mBoundService.prevTrack();
+        }
     }
 
-    private void changePosition(int delta) {
-        mCurrentPosition += delta;
+    @Override
+    public int getCurrentPosition() {
+        return (mBoundService != null)?mBoundService.getCurrentPosition():0;
+    }
 
-        if(mCurrentPosition >= mTracks.size()) {
-            mCurrentPosition = 0;
-        } else if(mCurrentPosition < 0) {
-            mCurrentPosition = mTracks.size()-1;
+
+    /* ==== SERVICE ASYNC EVENTS ==== */
+    @Override
+    public void onPreparing(TrackWrapper track) {
+        if(mPf != null) {
+            mPf.bindTrackData(track);
+            mPf.lockControls(true);
+        }
+    }
+
+    @Override
+    public void onPrepared(int duration, TrackWrapper trackPrepared) {
+
+        if(mPf != null) {
+            mPf.lockControls(false);
+            mPf.setSeekbarMaxDuration(mBoundService.getDuration());
+            mPf.playPause(true);
+        }
+    }
+
+    @Override
+    public void onCompletion() {
+        if(mPf != null) {
+            mPf.playPause(false);
         }
     }
 }

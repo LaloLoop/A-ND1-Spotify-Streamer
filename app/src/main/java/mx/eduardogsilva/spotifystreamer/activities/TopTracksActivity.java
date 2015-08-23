@@ -13,11 +13,13 @@ import java.util.List;
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.fragments.TopTracksFragment;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
+import mx.eduardogsilva.spotifystreamer.service.SpotifyPlayerService;
 
 public class TopTracksActivity extends AppCompatActivity implements TopTracksFragment.OnTopTracksListener{
 
     private final String LOG_TAG = TopTracksActivity.class.getSimpleName();
 
+    public static final String EXTRA_ARTIST_ID = "artistId";
     public static final String EXTRA_TRACKS = "etracks";
     public static final String EXTRA_TRACK_POSITION = "cposition";
 
@@ -53,13 +55,20 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
     }
 
     @Override
-    public void onTrackClicked(int position, List<TrackWrapper> tracks) {
+    public void onTrackClicked(String artistId, int position, List<TrackWrapper> tracks) {
         Intent topTracksIntent = getIntent();
 
         Intent playIntent = new Intent(this, PlayerActivity.class);
         playIntent.putExtras(topTracksIntent);
+        playIntent.putExtra(EXTRA_ARTIST_ID, artistId);
         playIntent.putParcelableArrayListExtra(EXTRA_TRACKS, (ArrayList<? extends Parcelable>) tracks);
         playIntent.putExtra(EXTRA_TRACK_POSITION, position);
+
+        Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
+        serviceIntent.setAction(SpotifyPlayerService.ACTION_INIT_PLAY);
+        serviceIntent.putExtras(playIntent);
+
+        startService(serviceIntent);
 
         startActivity(playIntent);
     }
