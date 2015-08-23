@@ -43,6 +43,7 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
     public static final String ACTION_PLAY_PAUSE = "mx.eduardogsilva.action.PLAY_PAUSE";
     public static final String ACTION_PREVIOUS = "mx.eduardogsilva.action.PREVIOUS";
     public static final String ACTION_NEXT = "mx.eduardogsilva.action.NEXT";
+    public static final String ACTION_UPDATE_NOTIFICATION = "mx.eduardogsilva.action.UPDATE_NOTIF";
 
     // Media session token
     private static final String MEDIA_SESSION_TOKEN = "mx.eduardosilva.token.JLAKJS0";
@@ -156,6 +157,9 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
                 break;
             case ACTION_PREVIOUS:
                 prevTrack();
+                updateNotification();
+                break;
+            case ACTION_UPDATE_NOTIFICATION:
                 updateNotification();
                 break;
             default:
