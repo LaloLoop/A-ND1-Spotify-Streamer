@@ -2,13 +2,11 @@ package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
@@ -39,6 +37,7 @@ import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.adapters.TracksRecyclerAdapter;
 import mx.eduardogsilva.spotifystreamer.adapters.TracksRecyclerAdapter.TrackViewHolder.ITracksViewHolderClicks;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
+import mx.eduardogsilva.spotifystreamer.utilities.PrefsUtility;
 import retrofit.RetrofitError;
 
 
@@ -188,8 +187,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
      */
     private void updateTracks(String artistId) {
         // Get the location saved in preferences
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String locationPref = sharedPreferences.getString(getString(R.string.pref_key_location), getString(R.string.pref_default_location));
+        String locationPref = PrefsUtility.getLocation(getActivity());
 
         // Create the asyncTask to download tracks data
         new TracksDownloadTask().execute(artistId, locationPref);

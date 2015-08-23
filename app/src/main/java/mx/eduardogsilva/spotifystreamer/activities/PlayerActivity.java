@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.fragments.PlayerFragment;
@@ -35,7 +36,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
             if(mBoundService.isPrepared()) {
                 mPf.lockControls(false);
                 mPf.setSeekbarMaxDuration(mBoundService.getDuration());
-                mPf.playPause(true);
+                mPf.playPause(mBoundService.isPlaying());
             }
         }
 
@@ -54,14 +55,18 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
 
         mPf = (PlayerFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_player);
-
-        // Bind with the service;
-        doBindService();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        if(mBoundService != null) {
+            mBoundService.setOnAsyncServiceistener(this);
+            invalidateOptionsMenu();
+        } else {
+            doBindService();
+        }
     }
 
     @Override
@@ -134,6 +139,8 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
         if(mPf != null) {
             mPf.bindTrackData(track);
             mPf.lockControls(true);
+        } else {
+            Log.e(LOG_TAG, "mPf is NULL");
         }
     }
 
