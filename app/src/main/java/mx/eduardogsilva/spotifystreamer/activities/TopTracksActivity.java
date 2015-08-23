@@ -54,7 +54,7 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
     protected void onResume() {
         super.onResume();
         if(mBoundService != null) {
-            mBoundService.setOnAsyncServiceistener(this);
+            mBoundService.setOnAsyncServiceListener(this);
             invalidateOptionsMenu();
         } else {
             doBindService();
@@ -125,7 +125,7 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
 
     private void doUnbindService() {
         if(mIsBound) {
-            mBoundService.setOnAsyncServiceistener(null);
+            mBoundService.setOnAsyncServiceListener(null);
             unbindService(mConnection);
             mIsBound = false;
         }

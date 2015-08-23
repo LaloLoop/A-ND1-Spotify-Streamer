@@ -368,12 +368,19 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
         return false;
     }
 
-    public void setOnAsyncServiceistener(OnAsyncServiceListener mListener) {
+    public void setOnAsyncServiceListener(OnAsyncServiceListener mListener) {
         this.mListener = mListener;
     }
 
     /* ===== NOTIFICATION ===== */
     private void updateNotification() {
+        boolean displayNotifications = PrefsUtility.getNotificationsEnabled(getApplicationContext());
+
+        if(!displayNotifications) {
+            stopForeground(true);
+            return;
+        }
+
         TrackWrapper cTrack = getCurrentTrack();
 
         Intent resultIntent = new Intent(getApplicationContext(), PlayerActivity.class);

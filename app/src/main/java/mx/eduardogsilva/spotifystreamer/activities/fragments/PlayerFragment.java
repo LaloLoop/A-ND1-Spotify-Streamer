@@ -131,7 +131,7 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_player, menu);
+        inflater.inflate(R.menu.playerfragment, menu);
 
         MenuItem item = menu.findItem(R.id.action_share);
 

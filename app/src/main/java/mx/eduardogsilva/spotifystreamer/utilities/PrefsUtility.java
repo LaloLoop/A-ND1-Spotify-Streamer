@@ -21,4 +21,12 @@ public class PrefsUtility {
         );
     }
 
+    public static boolean getNotificationsEnabled(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
+
+        return prefs.getBoolean(displayNotificationsKey,
+                Boolean.parseBoolean(context.getString(R.string.pref_enable_notifications_default)));
+    }
 }

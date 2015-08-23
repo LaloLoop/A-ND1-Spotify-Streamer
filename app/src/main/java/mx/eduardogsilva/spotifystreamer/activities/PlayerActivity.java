@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.activities.fragments.PlayerFragment;
@@ -62,7 +64,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
         super.onResume();
 
         if(mBoundService != null) {
-            mBoundService.setOnAsyncServiceistener(this);
+            mBoundService.setOnAsyncServiceListener(this);
             invalidateOptionsMenu();
         } else {
             doBindService();
@@ -80,7 +82,28 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
         super.onDestroy();
     }
 
-    /* ==== AUXILIARY METHODS ==== */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_player, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if(id == R.id.action_settings) {
+
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+/* ==== AUXILIARY METHODS ==== */
 
     private void doBindService() {
         Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
@@ -91,7 +114,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
 
     private void doUnbindService() {
         if(mIsBound) {
-            mBoundService.setOnAsyncServiceistener(null);
+            mBoundService.setOnAsyncServiceListener(null);
             unbindService(mConnection);
             mIsBound = false;
         }
