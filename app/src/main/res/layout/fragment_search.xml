@@ -12,7 +12,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/artist_search_listview"
         android:layout_gravity="center_horizontal"
-        tools:visibility="gone"/>
+        tools:visibility="gone"
+        style="@style/ArtistListStyle"/>
 
     <!-- Not found message -->
     <LinearLayout

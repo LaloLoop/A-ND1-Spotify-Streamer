@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -37,7 +38,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
             // Init service with new data only if user selected a new track.
             if(mBoundService.isPrepared()) {
                 mPf.lockControls(false);
-                mPf.setSeekbarMaxDuration(mBoundService.getDuration());
+                mPf.setSeekBarMaxDuration(mBoundService.getDuration());
                 mPf.playPause(mBoundService.isPlaying());
             }
         }
@@ -55,8 +56,14 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
-        mPf = (PlayerFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_player);
+        mPf = (PlayerFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_player);
+
+        if(mPf == null) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            mPf = new PlayerFragment();
+            ft.add(R.id.fragment_player, mPf);
+            ft.commit();
+        }
     }
 
     @Override
@@ -103,7 +110,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
 
         return super.onOptionsItemSelected(item);
     }
-/* ==== AUXILIARY METHODS ==== */
+    /* ==== AUXILIARY METHODS ==== */
 
     private void doBindService() {
         Intent serviceIntent = new Intent(this, SpotifyPlayerService.class);
@@ -172,7 +179,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
 
         if(mPf != null) {
             mPf.lockControls(false);
-            mPf.setSeekbarMaxDuration(mBoundService.getDuration());
+            mPf.setSeekBarMaxDuration(mBoundService.getDuration());
             mPf.playPause(true);
         }
     }

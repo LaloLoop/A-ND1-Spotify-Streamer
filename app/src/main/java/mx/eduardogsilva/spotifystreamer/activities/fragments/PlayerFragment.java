@@ -1,19 +1,20 @@
 package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.app.Dialog;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -23,13 +24,21 @@ import com.squareup.picasso.Picasso;
 
 import mx.eduardogsilva.spotifystreamer.R;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
+import mx.eduardogsilva.spotifystreamer.utilities.FormatUtils;
+import mx.eduardogsilva.spotifystreamer.utilities.IntentUtils;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PlayerFragment extends Fragment implements View.OnClickListener {
+public class PlayerFragment extends DialogFragment implements View.OnClickListener {
 
     private static final String LOG_TAG = PlayerFragment.class.getSimpleName();
+
+    public static String EXTRA_TRACK = "etrack";
+    public static String EXTRA_LOCKED_CONTROLS = "lcontrols";
+    public static String EXTRA_PLAYING = "eplaying";
+    public static String EXTRA_SEEKBAR_MAX = "sbmax";
+    public static String EXTRA_SHOW_SHARE_ACTION = "ssaction";
 
     private ShareActionProvider mShareActionProvider;
     // Share information
@@ -47,13 +56,25 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
     private TextView mCurrentTimeTextView;
     private TextView mTotalTimeTextView;
 
+    // UI updating for progress bar
     private Handler mHandler = new Handler();
 
+    // UI Events listener
     private OnPlayerInteractionListener mListener;
 
+    // Indicates playing state
     private boolean mPlaying = false;
+    private boolean mLockedControls = true;
+    private boolean mShowShareAction = true;
 
     public PlayerFragment() {
+    }
+
+    public static PlayerFragment newInstance(Bundle args) {
+        PlayerFragment pf = new PlayerFragment();
+        pf.setArguments(args);
+
+        return pf;
     }
 
     @Override
@@ -102,7 +123,8 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
                 if(mListener != null) {
                     try{
 
-                        int currentPosition = mListener.getCurrentPosition() / 1000;
+                        int originalPosition = mListener.getCurrentPosition();
+                        int currentPosition = originalPosition / 1000;
 
                         mSeekBar.setProgress(currentPosition);
 
@@ -121,16 +143,61 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
         // By default lock controls
         lockControls(true);
 
-        setHasOptionsMenu(true);
+        if(getArguments() != null) {
+            Bundle args = getArguments();
+            TrackWrapper track = args.getParcelable(EXTRA_TRACK);
+            mLockedControls = args.getBoolean(EXTRA_LOCKED_CONTROLS, true);
+            int seekBarMax = args.getInt(EXTRA_SEEKBAR_MAX, 30);
+            mShowShareAction = args.getBoolean(EXTRA_SHOW_SHARE_ACTION, true);
+            mPlaying = args.getBoolean(EXTRA_PLAYING, false);
 
-        Log.i(LOG_TAG, "onCreate");
+            bindTrackData(track);
+            lockControls(mLockedControls);
+            setSeekBarMaxDuration(seekBarMax);
+            playPause(mPlaying);
+        }
+
+        if(savedInstanceState != null) {
+            setSeekBarMaxDuration(savedInstanceState.getInt(EXTRA_SEEKBAR_MAX) * 1000);
+            playPause(savedInstanceState.getBoolean(EXTRA_PLAYING));
+            lockControls(savedInstanceState.getBoolean(EXTRA_LOCKED_CONTROLS));
+        }
+
+        if(mShowShareAction) {
+            setHasOptionsMenu(true);
+        }
 
         return rootView;
+    }
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        return dialog;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
+        outState.putBoolean(EXTRA_PLAYING, mPlaying);
+        if(mSeekBar != null){
+            outState.putInt(EXTRA_SEEKBAR_MAX, mSeekBar.getMax());
+        }
+        outState.putBoolean(EXTRA_LOCKED_CONTROLS, mLockedControls);
+
+        super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
+
+        if(!mShowShareAction) {
+            return;
+        }
+
         inflater.inflate(R.menu.playerfragment, menu);
 
         MenuItem item = menu.findItem(R.id.action_share);
@@ -139,7 +206,7 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
 
         if(mShareActionProvider != null && mTrackInfo != null) {
-            mShareActionProvider.setShareIntent(createSongIntent());
+            mShareActionProvider.setShareIntent(IntentUtils.createShareTextIntent(mTrackInfo));
         }
     }
 
@@ -208,34 +275,24 @@ public class PlayerFragment extends Fragment implements View.OnClickListener {
         mSongNameTextView.setText(track.name);
         Picasso.with(getActivity()).load(track.getLargeImage()).into(mAlbumImageView);
 
-        mTrackInfo = getString(R.string.format_share, track.name, track.getArtistName(),
-                track.getExternalUrl());
+        mTrackInfo = FormatUtils.getTrackShareInfo(track, getActivity());
 
         // Set Share data
-        if(mShareActionProvider != null && mTrackInfo != null) {
-            mShareActionProvider.setShareIntent(createSongIntent());
-        } else {
-            Log.e(LOG_TAG, "ShareActionProvider is null!");
+        if(mShowShareAction && mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(IntentUtils.createShareTextIntent(mTrackInfo));
         }
     }
 
     public void lockControls(boolean lock) {
+        if(mLockedControls != lock) {
+            mLockedControls = lock;
+        }
         // Lock controls
         mPlayPauseButton.setClickable(!lock);
         mSeekBar.setEnabled(!lock);
     };
 
-    private Intent createSongIntent() {
-
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-        shareIntent.putExtra(Intent.EXTRA_TEXT, mTrackInfo);
-        shareIntent.setType("text/plain");
-
-        return shareIntent;
-    }
-
-    public void setSeekbarMaxDuration(int duration) {
+    public void setSeekBarMaxDuration(int duration) {
         duration = (duration == -1)? 30 : (duration / 1000);
         mSeekBar.setMax(duration);
 

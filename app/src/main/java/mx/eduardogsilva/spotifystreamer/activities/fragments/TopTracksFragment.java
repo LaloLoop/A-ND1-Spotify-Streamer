@@ -237,7 +237,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
 
     @Override
     public void onItemClicked(int position) {
-        mListener.onTrackClicked(mArtistId, position, mTracksAdapter.getTracks());
+        mListener.onTrackSelected(mArtistId, position, mTracksAdapter.getTracks());
     }
 
     /**
@@ -263,7 +263,7 @@ public class TopTracksFragment extends Fragment implements ITracksViewHolderClic
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnTopTracksListener {
-        void onTrackClicked(String artistId, int position, List<TrackWrapper> tracks);
+        void onTrackSelected(String artistId, int position, List<TrackWrapper> tracks);
     }
 
     private class TracksDownloadTask extends AsyncTask<String, Void, List<TrackWrapper>> {

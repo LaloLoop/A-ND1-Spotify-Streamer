@@ -20,4 +20,8 @@
         <item name="colorPrimaryDark">@color/primary_color_dark</item>
     </style>
 
+    <style name="ArtistListStyle" parent="Widget.AppCompat.ListView">
+        <item name="android:choiceMode">none</item>
+    </style>
+
 </resources>

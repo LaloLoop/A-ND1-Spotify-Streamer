@@ -132,7 +132,7 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
     }
 
     @Override
-    public void onTrackClicked(String artistId, int position, List<TrackWrapper> tracks) {
+    public void onTrackSelected(String artistId, int position, List<TrackWrapper> tracks) {
 
         Intent playIntent = new Intent(this, PlayerActivity.class);
 
