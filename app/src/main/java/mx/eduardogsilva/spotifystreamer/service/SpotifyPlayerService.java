@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 import mx.eduardogsilva.spotifystreamer.R;
+import mx.eduardogsilva.spotifystreamer.activities.MainActivity;
 import mx.eduardogsilva.spotifystreamer.activities.PlayerActivity;
 import mx.eduardogsilva.spotifystreamer.activities.TopTracksActivity;
 import mx.eduardogsilva.spotifystreamer.model.TrackWrapper;
@@ -44,6 +45,7 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
     public static final String ACTION_PREVIOUS = "mx.eduardogsilva.action.PREVIOUS";
     public static final String ACTION_NEXT = "mx.eduardogsilva.action.NEXT";
     public static final String ACTION_UPDATE_NOTIFICATION = "mx.eduardogsilva.action.UPDATE_NOTIF";
+    public static final String ACTION_STOP = "mx.eduardogsilva.action.STOP";
 
     // Media session token
     private static final String MEDIA_SESSION_TOKEN = "mx.eduardosilva.token.JLAKJS0";
@@ -62,6 +64,7 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
     List<TrackWrapper> mTracks;
     boolean mPrepared = false;
     boolean mPlaying = false;
+    boolean mTwoPane = false;
 
     // Preferences status
     private String mLastLocation = "";
@@ -144,6 +147,11 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
 
         switch (action) {
 
+            case ACTION_INSTANTIATE:
+                if(intent.hasExtra(MainActivity.EXTRA_TWO_PANE)) {
+                    mTwoPane = intent.getBooleanExtra(MainActivity.EXTRA_TWO_PANE, false);
+                }
+                break;
             case ACTION_INIT_PLAY:
                 initAndPlay(intent);
                 break;
@@ -161,6 +169,9 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
                 break;
             case ACTION_UPDATE_NOTIFICATION:
                 updateNotification();
+                break;
+            case ACTION_STOP:
+                stopSelf();
                 break;
             default:
                 break;
@@ -387,7 +398,14 @@ public class SpotifyPlayerService extends Service implements MediaPlayer.OnPrepa
 
         TrackWrapper cTrack = getCurrentTrack();
 
-        Intent resultIntent = new Intent(getApplicationContext(), PlayerActivity.class);
+        Intent resultIntent;
+
+        if(mTwoPane) {
+            resultIntent = new Intent(getApplicationContext(), MainActivity.class);
+            resultIntent.setAction(MainActivity.ACTION_SHOW_PLAYING);
+        } else {
+            resultIntent = new Intent(getApplicationContext(), PlayerActivity.class);
+        }
 
         PendingIntent contentIntent =  PendingIntent.getActivity(
                 getApplicationContext(),

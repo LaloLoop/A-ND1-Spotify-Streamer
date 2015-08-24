@@ -1,5 +1,6 @@
 package mx.eduardogsilva.spotifystreamer.activities.fragments;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -60,14 +61,18 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     public static final String EXTRA_ARTIST_NAME = "ARTIST_NAME";
     public static final String EXTRA_ARTIST_IMAGE_URL = "ARTIST_IMAGE_URL";
     public static final String EXTRA_ARTIST_LV_STATE = "ARTIST_LV_POSITION";
+    public static final String EXTRA_LIST_POSITION = "LIST_POSITION";
 
     // ListView state
-    private Parcelable mListState = null;
+    private int mPosition;
 
     // Bundle keys
     private static final String BUNDLE_ARTISTS = "artistsList";
     private static final String BUNDLE_QUERY = "queryString";
     private static final String BUNDLE_SV_ICONIFIED = "svIconified";
+
+    // UI Events listener
+    private OnSearchListener mListener;
 
     public SearchFragment() {
     }
@@ -101,7 +106,9 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
             if(artist != null){
                 mArtistsAdapter.replaceAll(artist);
             }
-            mListState = savedInstanceState.getParcelable(EXTRA_ARTIST_LV_STATE);
+            if(savedInstanceState.containsKey(EXTRA_LIST_POSITION)) {
+                mPosition = savedInstanceState.getInt(EXTRA_LIST_POSITION);
+            }
         }
 
         return rootView;
@@ -110,15 +117,19 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
     @Override
     public void onStart() {
         super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
 
         // Get filter we will be using.
         artistsFilter = (ArtistsFilter) mArtistsAdapter.getFilter();
         // Set listener to check when data is updated
         artistsFilter.setDataFilteredListener(this);
 
-        // If we have a list state, restore it.
-        if(mListState != null){
-            artistsListView.onRestoreInstanceState(mListState);
+        if(mPosition != ListView.INVALID_POSITION) {
+            artistsListView.setSelection(mPosition);
         }
 
     }
@@ -134,9 +145,10 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         outState.putString(BUNDLE_QUERY, currentSearchQuery);
         outState.putBoolean(BUNDLE_SV_ICONIFIED, searchView.isIconified());
 
-        // Save ListView position
-        mListState = artistsListView.onSaveInstanceState();
-        outState.putParcelable(EXTRA_ARTIST_LV_STATE, mListState);
+        // Save position
+        if(mPosition != ListView.INVALID_POSITION) {
+            outState.putInt(EXTRA_LIST_POSITION, mPosition);
+        }
 
         // Save artist data.
         outState.putParcelableArrayList(BUNDLE_ARTISTS, (ArrayList<? extends Parcelable>) mArtistsAdapter.getArtists());
@@ -155,6 +167,23 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
             currentSearchQuery = "";
             iconified = true;
         }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnSearchListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnSearchListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
     }
 
     @Override
@@ -187,7 +216,11 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         tracksIntent.putExtra(EXTRA_ARTIST_NAME, artist.name);
         tracksIntent.putExtra(EXTRA_ARTIST_IMAGE_URL, artist.getLargeImage());
 
-        startActivity(tracksIntent);
+        mPosition = position;
+
+        if(mListener != null) {
+            mListener.onArtistSelected(tracksIntent);
+        }
     }
 
     // Listeners for SearchView
@@ -203,6 +236,8 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         searchView.clearFocus();
 
         artistsFilter.filter(query);
+
+        mListener.onQueryTextSubmit(query);
 
         return true;
     }
@@ -224,7 +259,7 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         // Set top position.
         artistsListView.smoothScrollToPosition(0);
 
-
+        mListener.onDataFiltered();
     }
 
     @Override
@@ -238,5 +273,18 @@ public class SearchFragment extends Fragment implements OnItemClickListener, OnQ
         loadingView.setVisibility(View.GONE);
         emptyView.setVisibility(View.GONE);
         Toast.makeText(getActivity(), R.string.error_search_artists, Toast.LENGTH_LONG).show();
+    }
+
+    public void clickPosition(int position) {
+        artistsListView.performItemClick(
+                mArtistsAdapter.getView(position, null, null),
+                position,
+                artistsListView.getItemIdAtPosition(position));
+    }
+
+    public interface OnSearchListener {
+        void onArtistSelected(Intent intent);
+        void onQueryTextSubmit(String queryText);
+        void onDataFiltered();
     }
 }

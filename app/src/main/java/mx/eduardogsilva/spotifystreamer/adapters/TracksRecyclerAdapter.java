@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import mx.eduardogsilva.spotifystreamer.R;
@@ -42,7 +41,6 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      * @param context   Context to inflate views.
      */
     public TracksRecyclerAdapter(Context context, TrackViewHolder.ITracksViewHolderClicks listener) {
-        this.tracks = new ArrayList<>();
         this.context = context;
         isLoading = true;
         mTracksClicksListener = listener;
@@ -57,7 +55,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public int getItemViewType(int position) {
         if(isLoading) {
             return LOADING_VIEW;
-        }if(tracks.isEmpty()){
+        }if(tracks != null && tracks.isEmpty()){
             return EMPTY_VIEW;
         } else {
             return TRACK_VIEW;
@@ -103,7 +101,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      */
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        if(!tracks.isEmpty()){
+        if(tracks != null && !tracks.isEmpty()){
             TrackWrapper track = tracks.get(position);
             TrackViewHolder tvh = (TrackViewHolder) holder;
             tvh.bind(track, context, position);
@@ -117,7 +115,7 @@ public class TracksRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public int getItemCount() {
 
-        return tracks.isEmpty()? 1 : tracks.size();
+        return tracks == null? 0 : tracks.isEmpty()? 1 : tracks.size();
     }
 
     /**

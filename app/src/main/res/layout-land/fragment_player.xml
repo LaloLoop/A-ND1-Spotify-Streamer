@@ -14,9 +14,8 @@
     <ImageView
         android:id="@+id/album_cover_imageview"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         tools:src="@mipmap/track_default"
-        android:scaleType="centerCrop"
         android:layout_weight="1"
         android:layout_marginRight="16dp"
         android:layout_marginEnd="16dp"/>
